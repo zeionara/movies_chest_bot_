@@ -1,3 +1,6 @@
+import sys
+import traceback
+
 from keyboard_markups import genre_reply_markup
 from keyboard_markups import tracker_reply_markup
 
@@ -7,6 +10,8 @@ from constants import msg_choose_genre
 from constants import msg_choose_tracker
 from constants import msg_send_me_title_for_search
 from constants import msg_coming_soon
+from constants import tracker_names
+from constants import msg_choose_tracker_to_subscripe, tracker_names_delimiter
 
 from shared import users
 from user import User
@@ -33,8 +38,21 @@ def select_tracker(bot, update):
     return response
 
 def subscribe(bot, update):
-    response = bot.sendMessage(chat_id = update.message.chat_id, text = msg_coming_soon)
-    return response
+    print('got')
+    try:
+        chat_id = update.message.chat_id
+
+        if users.get(chat_id) is None:
+            users[chat_id] = User(states['choosing_tracker_to_subscribe'], 'yup')
+        else:
+            users[chat_id].state = states['choosing_tracker_to_subscribe']
+
+        response = bot.sendMessage(chat_id = chat_id, text = msg_choose_tracker_to_subscripe + tracker_names_delimiter.join(tracker_names))
+
+        return response
+    except Exception:
+        print(sys.exc_info()[1])
+        print(traceback.print_tb(sys.exc_info()[2]))
 
 def start_search(bot, update):
     try:

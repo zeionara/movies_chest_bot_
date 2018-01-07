@@ -52,6 +52,13 @@ def set_genre(chat_id, genre, bot):
 
     send_movie_info(bot, chat_id)
 
+def handle_decision(bot, chat_id, answer):
+    if answer == 'yes':
+        bot.sendMessage(chat_id = chat_id, text = "Ok, let's try to do it again")
+    else:
+        bot.sendMessage(chat_id = chat_id, text = "As you wish")
+        users[chat_id].state = states['undefined']
+
 def handle_callback(bot, update):
     try:
         callback_data = split(update.callback_query.data, maxsplit = 1)
@@ -75,6 +82,10 @@ def handle_callback(bot, update):
 
         elif callback_type == 'wikisection':
             send_wiki_section_info(bot, chat_id, callback_value)
+
+        elif callback_type == 'decision':
+            handle_decision(bot, chat_id, callback_value)
+
     except Exception:
         print(sys.exc_info()[1])
         print(traceback.print_tb(sys.exc_info()[2]))

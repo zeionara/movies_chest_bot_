@@ -223,6 +223,26 @@ def update_movies(chat_id):
     print('iop')
     users[chat_id].movies = movies
 
+def cache_page(tracker, genre, page):
+
+    redis_key = str(tracker) + delimiter + str(genre) + delimiter + str(page)
+    cached_movies = get_from_redis(redis_key)
+
+    if cached_movies is not None:
+        return
+
+    if tracker == 'yup':
+        movies = ya.get_movies_by_genre(genre, page)
+    elif tracker == 'pbay':
+        movies = pa.get_movies_by_page(page)
+    elif tracker == 'mine':
+        movies = get_top_movies(top_movies_xml_path)
+    elif tracker == 'act':
+        movies = kudago_adapter.get_actual_movies(genre)
+
+    print(movies)
+    #write_to_redis(redis_key, movies, True)
+
 def increase_index(chat_id):
 
     user = users[chat_id]

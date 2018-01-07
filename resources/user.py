@@ -18,3 +18,4 @@ class User:
         self.reviews_group = None
         self.wiki_content = None
         self.wiki_keyboard_markup = None
+        self.trackers_to_subscribe = None

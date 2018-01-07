@@ -27,6 +27,13 @@ def get_genres_buttons():
     return result
 
 #
+#yes/no
+#
+yes_btn = InlineKeyboardButton("yes", callback_data = join('decision', 'yes'))
+no_btn = InlineKeyboardButton("no", callback_data = join('decision', 'no'))
+yes_no_reply_markup = InlineKeyboardMarkup([[yes_btn, no_btn]])
+
+#
 #tracker selection menu
 #
 yup_btn = InlineKeyboardButton("New torrents from yuptorrents", callback_data = join('tracker', 'yup'))

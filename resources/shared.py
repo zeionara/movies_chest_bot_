@@ -4,3 +4,5 @@ from piratebay_adapter import PiratebayAdapter
 ya = YuptorrentsAdapter()
 pa = PiratebayAdapter()
 users = {}
+
+subscribed_to = {}
