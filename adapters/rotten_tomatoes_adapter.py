@@ -78,7 +78,7 @@ def get_reviews(title, critics = True, page = 1):
 
     reviews = get_reviews_by_page_info(name, year, page, critics, False)
     if len(reviews) == 0:
-        reviews = get_critics_reviews_by_page_info(name, year, page, critics, True)
+        reviews = get_reviews_by_page_info(name, year, page, critics, True)
 
     return reviews
 

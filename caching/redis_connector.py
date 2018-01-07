@@ -33,8 +33,16 @@ def update_redis_time(key):
     redis_connection.set(time_prefix + redis_key_delimiter + str_key, pickle.dumps(datetime.datetime.now()))
 
 def get_from_redis(key):
-    packed_object = redis_connection.get(redis_key)
+    print('waiting for redis...')
+    packed_object = redis_connection.get(key)
+    print('waiting for redis finished')
     if packed_object is not None:
+        print('>>>>>>')
         update_redis_time(key)
-        return pickle.loads(cached_reviews)
+        print('>>>>>>')
+        print(packed_object)
+        res = pickle.loads(packed_object)
+        print('>>>>>>')
+        return res
+    print(packed_object)
     return None

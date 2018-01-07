@@ -1,6 +1,9 @@
-from main import users
-from main import pa
-from main import ya
+import sys
+import traceback
+
+from shared import users
+from shared import pa
+from shared import ya
 
 from constants import states
 
@@ -8,7 +11,15 @@ from keyboard_markups import action_reply_markup
 
 from wiki_manager import send_wiki_section_info
 
-from movies_manager import send_first_movie_msg
+from movies_manager import send_first_movie_msg, update_movies, increase_index, send_movie_info
+
+from string_converting import split
+
+from user import User
+
+from constants import states
+
+from action_handlers import handle_action
 
 def set_tracker(chat_id, tracker):
 
@@ -42,24 +53,28 @@ def set_genre(chat_id, genre, bot):
     send_movie_info(bot, chat_id)
 
 def handle_callback(bot, update):
-    callback_data = split(update.callback_query.data, maxsplit = 1)
-    callback_type = callback_data[0]
-    callback_value = callback_data[1]
+    try:
+        callback_data = split(update.callback_query.data, maxsplit = 1)
+        callback_type = callback_data[0]
+        callback_value = callback_data[1]
 
-    chat_id = update.callback_query.message.chat.id
+        chat_id = update.callback_query.message.chat.id
 
-    if callback_type == 'genre':
-        set_genre(chat_id, callback_value, bot)
+        if callback_type == 'genre':
+            set_genre(chat_id, callback_value, bot)
 
-    elif callback_type == 'tracker':
-        set_tracker(chat_id, callback_value)
-        bot.sendMessage(chat_id = chat_id, text = 'Ok, tracker has been switched')
+        elif callback_type == 'tracker':
+            set_tracker(chat_id, callback_value)
+            bot.sendMessage(chat_id = chat_id, text = 'Ok, tracker has been switched')
 
-        if callback_value == 'pbay' or callback_value == 'mine':
-            send_first_movie_msg(bot, chat_id, callback_value)
+            if callback_value == 'pbay' or callback_value == 'mine':
+                send_first_movie_msg(bot, chat_id, callback_value)
 
-    elif callback_type == 'action':
-        handle_action(chat_id, callback_value, bot)
+        elif callback_type == 'action':
+            handle_action(chat_id, callback_value, bot)
 
-    elif callback_type == 'wikisection':
-        send_wiki_section_info(bot, chat_id, callback_value)
+        elif callback_type == 'wikisection':
+            send_wiki_section_info(bot, chat_id, callback_value)
+    except Exception:
+        print(sys.exc_info()[1])
+        print(traceback.print_tb(sys.exc_info()[2]))

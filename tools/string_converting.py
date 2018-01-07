@@ -1,5 +1,6 @@
 from constants import delimiter
 from constants import forbidden_movie_fields
+from constants import max_message_length
 
 def join(*args):
     return delimiter.join(args)

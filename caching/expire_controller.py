@@ -1,25 +1,24 @@
+#
+#standard libs
+#
+
 import re
 import datetime
-import configparser
 import redis
 import pickle
 import time
 import sys
-import os
 
-from constants import delimiter
-from constants import redis_key_delimiter
-from constants import time_prefix
-from constants import creation_time_prefix
+#
+#project libs
+#
 
-from constants import max_lifetime
-from constants import max_memory
-from constants import checking_interval
-
-redis_host = os.environ['barbershop_redis_host']
-redis_port = int(os.environ['barbershop_redis_port'])
-
-redis_connection = redis.StrictRedis(host = redis_host, port = redis_port, db = 0)
+#redis keys generation and filtering
+from constants import delimiter, redis_key_delimiter, time_prefix, creation_time_prefix
+#redis keys control
+from constants import max_lifetime, max_memory, checking_interval
+#redis storage
+from redis_connector import redis_connection
 
 executing = True
 

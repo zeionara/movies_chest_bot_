@@ -1,10 +1,12 @@
-from main import users
-from main import ya
-from main import pa
+from shared import users
+from shared import ya
+from shared import pa
 
 from redis_connector import get_from_redis
+from redis_connector import write_to_redis
 
 from constants import delimiter
+from constants import reviews_prefix
 
 from keyboard_markups import action_reply_markup_review_imdb
 from keyboard_markups import action_reply_markup_review_kp
@@ -15,6 +17,10 @@ from keyboard_markups import action_reply_markup_review_rta
 from keyboard_markups import action_reply_markup_review_rta_extended
 
 from string_converting import chunkstring
+
+import imdb_adapter
+import kinopoisk_adapter
+import rotten_tomatoes_adapter
 
 def get_movie_id(chat_id):
 
@@ -28,6 +34,7 @@ def get_movie_id(chat_id):
 
 def get_movie_review_list_index(provider, id):
     index = str(provider) + delimiter + str(id)
+    return index
 
 def update_reviews(chat_id):
 
@@ -40,7 +47,7 @@ def update_reviews(chat_id):
     if users[chat_id].review_pages.get(index) is not None:
         page = users[chat_id].review_pages[index].get(reviews_group)
         if page is None:
-            users[chat_id].review_pages[index].get(reviews_group) = 1
+            users[chat_id].review_pages[index][reviews_group] = 1
             page = 1
 
     redis_key = str(reviews_prefix) + delimiter + str(provider) + delimiter + str(id)
@@ -52,13 +59,13 @@ def update_reviews(chat_id):
         return
 
     if provider == 'imdb':
-        reviews = imdb.get_reviews(str(id))
+        reviews = imdb_adapter.get_reviews(str(id))
     elif provider == 'kp':
-        reviews = kinopoisk_.get_reviews(str(id))
+        reviews = kinopoisk_adapter.get_reviews(str(id))
     elif provider == 'rt' and reviews_group == 'critics':
-        reviews = rotten_tomatoes.get_reviews(str(id), critics = True, page = page)
+        reviews = rotten_tomatoes_adapter.get_reviews(str(id), critics = True, page = page)
     elif provider == 'rt' and reviews_group == 'audience':
-        reviews = rotten_tomatoes.get_reviews(str(id), critics = False, page = page)
+        reviews = rotten_tomatoes_adapter.get_reviews(str(id), critics = False, page = page)
 
     write_to_redis(redis_key, reviews, True)
     users[chat_id].reviews = reviews

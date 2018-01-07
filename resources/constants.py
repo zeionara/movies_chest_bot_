@@ -25,6 +25,7 @@ msg_choose_genre = 'Please choose a genre:'
 msg_choose_tracker = 'Please choose a tracker:'
 msg_send_me_title_for_search = 'Please send me the title of the searched movie and the year in format: "The Beguiled (2017)"'
 msg_genre_is_not_set = 'Genre is not selected, please, set it at first'
+msg_coming_soon = 'The feature is coming soon'
 
 omdb_api_key = os.environ['zeionara_omdb_api_key']
 redis_host = os.environ['barbershop_redis_host']

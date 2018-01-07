@@ -1,10 +1,18 @@
-from main import users
-from main import ya
-from main import pa
+import requests
+from collections import namedtuple
+
+from shared import users
+from shared import ya
+from shared import pa
+
 
 from redis_connector import get_from_redis
+from redis_connector import write_to_redis
 
 from constants import top_movies_xml_path
+from constants import states
+from constants import delimiter
+from constants import omdb_api_key
 
 from html_parcing import remove_tags
 
@@ -14,6 +22,14 @@ from keyboard_markups import action_reply_markup_reduced
 from keyboard_markups import action_reply_markup_extremely_reduced
 
 from string_converting import stringify_advanced_movie_info
+
+import youtube_adapter
+import kudago_adapter
+
+from top_movies_adapter import get_top_movies
+
+Movie = namedtuple('Movie','title poster description trailer')
+MovieHeader = namedtuple('MovieHeader','title href')
 
 #
 #get movie info via basic information from user's object
@@ -28,12 +44,12 @@ def get_standart_movie_info(chat_id):
     if tracker == 'yup':
         return ya.get_movie_by_header(user.movies[user.indexes[tracker][genre]])
     elif tracker == 'pbay' or users[chat_id].tracker == 'mine':
-        title = user.movies[user.indexes[.tracker][genre]].title
-        trailer = youtube.get_trailer(title)
+        title = user.movies[user.indexes[tracker][genre]].title
+        trailer = youtube_adapter.get_trailer(title)
         return Movie(title, None, 'no description found', trailer)
     elif tracker == 'act':
         movie = user.movies[user.indexes[tracker][genre]]
-        movie_details = kudago.get_movie_details(movie.id)
+        movie_details = kudago_adapter.get_movie_details(movie.id)
         return Movie(movie.title, movie_details['poster']['image'],
                 remove_tags(movie_details['description'] + movie_details['body_text']), movie_details['trailer'])
 
@@ -77,7 +93,7 @@ def send_standart_movie_info(bot, chat_id, redis_key, href):
     movie_info['Poster'] = movie.poster
     movie_info['Trailer'] = movie.trailer
     movie_info['Title'] = movie.title
-    movie_info['Href'] = movie.href
+    movie_info['Href'] = href
     movie_info['Description'] = movie.description
 
     write_to_redis(redis_key, movie_info, False)
@@ -87,7 +103,7 @@ def send_advanced_movie_info(bot, chat_id, advanced_info, redis_key, href):
     users[chat_id].imdb_id = advanced_info.get('imdbID')
     users[chat_id].current_title = redis_key
 
-    trailer = youtube.get_trailer(advanced_info['Title'])
+    trailer = youtube_adapter.get_trailer(advanced_info['Title'])
 
     if advanced_info['Poster'] is not None:
         bot.sendPhoto(chat_id, advanced_info['Poster'])
@@ -103,7 +119,7 @@ def send_advanced_movie_info(bot, chat_id, advanced_info, redis_key, href):
 def send_advanced_single_movie_info(bot, chat_id, advanced_info):
 
     redis_key = advanced_info['Title'] + ' (' + advanced_info['Year'] + ')'
-    trailer = youtube.get_trailer(advanced_info['Title'])
+    trailer = youtube_adapter.get_trailer(advanced_info['Title'])
 
     users[chat_id].current_title = redis_key
 
@@ -130,7 +146,7 @@ def send_movie_info(bot, chat_id):
         bot.sendMessage(chat_id, 'There are no more movies')
         return
 
-    cached_movie_info = redis_connection.get(movie.title)
+    cached_movie_info = get_from_redis(movie.title)
 
     if cached_movie_info is not None:
 
@@ -138,11 +154,11 @@ def send_movie_info(bot, chat_id):
         users[chat_id].imdb_id = cached_movie_info.get('imdbID')
         users[chat_id].current_title = movie.title
 
-        if 'imdbID' in movie_info:
-            bot.sendMessage(chat_id, movie_info['Title'] + '\n\n\n' + stringify_advanced_movie_info(movie_info) + \
+        if 'imdbID' in cached_movie_info:
+            bot.sendMessage(chat_id, cached_movie_info['Title'] + '\n\n\n' + stringify_advanced_movie_info(cached_movie_info) + \
                             '\n\n\n', reply_markup = action_reply_markup_extended)
         else:
-            bot.sendMessage(chat_id, movie_info['Title'] + '\n\n\n' + stringify_advanced_movie_info(movie_info) + \
+            bot.sendMessage(chat_id, cached_movie_info['Title'] + '\n\n\n' + stringify_advanced_movie_info(cached_movie_info) + \
                             '\n\n\n', reply_markup = action_reply_markup)
         return
 
@@ -187,11 +203,11 @@ def update_movies(chat_id):
     page = user.pages[tracker][genre]
 
     redis_key = str(tracker) + delimiter + str(genre) + delimiter + str(page)
-
+    print('iop')
     cached_movies = get_from_redis(redis_key)
-
+    print('iop')
     if cached_movies is not None:
-        users[chat_id].movies = movies
+        users[chat_id].movies = cached_movies
         return
 
     if tracker == 'yup':
@@ -201,9 +217,10 @@ def update_movies(chat_id):
     elif tracker == 'mine':
         movies = get_top_movies(top_movies_xml_path)
     elif tracker == 'act':
-        movies = kudago.get_actual_movies(genre)
-
+        movies = kudago_adapter.get_actual_movies(genre)
+    print('iop')
     write_to_redis(redis_key, movies, True)
+    print('iop')
     users[chat_id].movies = movies
 
 def increase_index(chat_id):

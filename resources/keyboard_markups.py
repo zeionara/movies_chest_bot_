@@ -56,6 +56,7 @@ wiki_btn = InlineKeyboardButton("search in wikipedia", callback_data = join('act
 action_reply_markup = InlineKeyboardMarkup([[next_btn, flush_btn], [kinopoisk_btn], [rtc_btn, rta_btn], [wiki_btn]])
 action_reply_markup_extended = InlineKeyboardMarkup([[next_btn, flush_btn], [imdb_btn, kinopoisk_btn], [rtc_btn, rta_btn], [wiki_btn]])
 action_reply_markup_reduced = InlineKeyboardMarkup([[imdb_btn, kinopoisk_btn], [rtc_btn, rta_btn], [wiki_btn]])
+action_reply_markup_extremely_reduced = InlineKeyboardMarkup([[kinopoisk_btn], [rtc_btn, rta_btn], [wiki_btn]])
 
 action_reply_markup_review_imdb = InlineKeyboardMarkup([[next_btn, flush_btn], [back_btn, kinopoisk_btn], [rtc_btn, rta_btn], [wiki_btn]])
 

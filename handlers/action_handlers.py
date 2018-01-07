@@ -1,4 +1,4 @@
-from main import users
+from shared import users
 
 from keyboard_markups import action_reply_markup
 
@@ -7,9 +7,13 @@ from constants import msg_genre_is_not_set
 
 from reviews_manager import get_movie_id
 from reviews_manager import get_movie_review_list_index
-from reviews_manager import update_reviews
+from reviews_manager import update_reviews, send_review_info
 
-from movies_manager import increase_index
+from movies_manager import increase_index, send_movie_info
+
+from reviews_manager import increase_reviews_index
+
+from wiki_manager import send_wiki_info
 
 def handle_next_action(chat_id, provider, index, searching_movies):
     if searching_movies:
@@ -63,6 +67,8 @@ def handle_kprev_action(chat_id):
     if users[chat_id].review_indexes.get(index) is None:
         users[chat_id].review_indexes[index] = 0
     else:
+        print(users[chat_id].review_indexes)
+        print(index)
         users[chat_id].review_indexes[index] += 1
 
 def handle_rtrev_action(chat_id, action):

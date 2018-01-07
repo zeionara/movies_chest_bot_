@@ -1,12 +1,14 @@
-from main import users
+from shared import users
 from keyboard_markups import back_btn
-from keyboard_markups import get_wiki_buttons
+from keyboard_markups import get_wiki_keyboard_markup
 
 from string_converting import chunkstring
 
+import wikipedia_adapter
+
 def send_wiki_info(bot, chat_id, title):
 
-    info = wikipedia_.get_movie_details(title)
+    info = wikipedia_adapter.get_movie_details(title)
 
     users[chat_id].wiki_content = info['content']
     sections = info['sections']
