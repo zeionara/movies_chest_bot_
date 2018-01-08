@@ -2,6 +2,7 @@
 #standard libs
 #
 
+
 import re
 import datetime
 import redis
@@ -14,18 +15,40 @@ import sys
 #
 
 #redis keys generation and filtering
-from constants import delimiter, redis_key_delimiter, time_prefix, creation_time_prefix
+from constants import delimiter, redis_key_delimiter, time_prefix, creation_time_prefix, delay_between_notifying_users, delay_between_request_sequence
 #redis keys control
 from constants import max_lifetime, max_memory, checking_interval
 #redis storage
-from redis_connector import redis_connection
+from redis_connector import redis_connection, get_from_redis, write_to_redis
+
+from shared import subscribed_to
+
+from movies_manager import load_page
+
+from subscriptions_manager import notify_all
 
 executing = True
 
 def get_key(key):
     return redis_key_delimiter.join(key.split(redis_key_delimiter)[1:])
 
+def get_movies_for_notification(new_page, old_page):
+    result = []
+    was_occured_earlier = False
+    for new_movie in new_page:
+        was_occured_earlier = False
+        searched_title_lower = new_movie.title.lower()
+        for old_movie in old_page:
+            if searched_title_lower == old_movie.title.lower():
+                was_occured_earlier = True
+                break
+        if not was_occured_earlier:
+            result.append(new_movie)
+    return result
+
 def inspect(arg):
+
+    bot = arg
 
     current_time = datetime.datetime.now()
     pip = redis_connection.pipeline()
@@ -36,16 +59,47 @@ def inspect(arg):
         keys.append(key)
 
     key_times = pip.execute()
-
+    print('New checking cycle')
     for i in range(len(keys)):
 
         key_time = pickle.loads(key_times[i])
         key = get_key(str(keys[i])[2:-1])
 
+        print('Key {} exists for {}'.format(str(str.encode(key), 'utf-8'), (current_time - key_time).total_seconds()))
+
         if ((current_time - key_time).total_seconds() >= max_lifetime):
-            redis_connection.delete(key)
-            redis_connection.delete(time_prefix + redis_key_delimiter + key)
-            redis_connection.delete(str(keys[i])[2:-1])
+            print('Expired')
+            print(subscribed_to)
+            if key in subscribed_to:
+                pass
+                print('There are users subscribed to this channel! {}'.format(subscribed_to[key]))
+                users_for_notification = subscribed_to[key]
+                key_parts = key.split(redis_key_delimiter)
+
+                tracker = key_parts[0]
+                genre = key_parts[1]
+                page = int(key_parts[2])
+
+                new_page = load_page(tracker, genre, page)
+                old_page = get_from_redis(key)
+
+                print('Old page')
+                print('New page')
+
+                movies_for_notification = get_movies_for_notification(new_page, old_page)
+                print(users_for_notification)
+                print(movies_for_notification)
+                notify_all(bot, users_for_notification, movies_for_notification)
+
+                write_to_redis(key, new_page, True)
+
+                time.sleep(delay_between_request_sequence)
+            else:
+                redis_connection.delete(key)
+                redis_connection.delete(time_prefix + redis_key_delimiter + key)
+                redis_connection.delete(str(keys[i])[2:-1])
+        else:
+            print('Not Expired')
 
 class cached_object_:
      def __init__(self, key, seconds_after_access, size):

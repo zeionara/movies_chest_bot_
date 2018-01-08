@@ -11,16 +11,23 @@ max_message_length = 1500
 top_movies_xml_path = 'resources/top_movies.xml'
 
 delay_between_request_sequence = 5
+delay_between_notifying_users = 1
 
 any_keyword = 'any'
 first_page = 1
 
-max_lifetime = 3600
+seconds_in_day = 86400
+
+max_lifetime = 660
 max_memory = 50240
-checking_interval = 3600
+checking_interval = 300
+
+interesting_cinemas = ['мираж','дом кино','пик','великан парк','каро']
+cinemas_indexes = {}
+cinemas_query_part = ''
 
 states = {'selecting_tracker' : 0, 'selecting_genre' : 1, 'iterating' : 2, 'searching' : 3, 'undefined' : 4, 'choosing_tracker_to_subscribe': 5,
-            'choosing_genre_to_subscribe': 6}
+            'choosing_genre_to_subscribe': 6, 'choosing_tracker_to_unsubscribe': 7, 'choosing_genre_to_unsubscribe': 8}
 genres = ['Action','Crime','Thriller','Drama','Fantasy','Romance','Adventure','Comedy','Documentary',
         'Biography','Horror','Family','Sci-Fi','War','Mystery','History','Sport','Music','Western','Animation','Superhero']
 genres_lower = ['action','crime','thriller','drama','fantasy','romance','adventure','comedy','documentary',
@@ -41,8 +48,14 @@ msg_genre_is_not_set = 'Genre is not selected, please, set it at first'
 msg_coming_soon = 'The feature is coming soon'
 msg_choose_tracker_to_subscripe = 'Please, send me a list of trackers which you want to send you notifications, for separating them use "' +\
             tracker_names_delimiter + '". If you want to get notifications from any tracker, just write "any". Available partial options are: '
+msg_choose_tracker_to_unsubscripe = 'Please, send me a list of trackers which you want to stop sending you notifications, for separating them use "' +\
+            tracker_names_delimiter + '". If you want to disable notifications from any tracker, just write "any". Available partial options for you are: '
 msg_choose_genre_to_subscripe = 'Please, send me a list of genres which you want to keep an eye, for separating them use "' +\
             tracker_names_delimiter + '". If you want to get notifications for any genre, just write "any". Available partial options are: '
+msg_choose_genre_to_unsubscripe = 'Please, send me a list of genres which you do not want to keep an eye, for separating them use "' +\
+            tracker_names_delimiter + '". If you do not want to get notifications for any genre, just write "any". Available partial options for you are: '
+msg_no_subscriptions = "You are not subscribed to any tracker"
+msg_entered_wrong = "Oops, it seems that you entered something wrong. Do you want to try again?"
 
 omdb_api_key = os.environ['zeionara_omdb_api_key']
 redis_host = os.environ['barbershop_redis_host']

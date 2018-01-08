@@ -5,6 +5,7 @@ from shared import users
 from shared import ya
 from shared import pa
 
+from string_converting import chunkstring
 
 from redis_connector import get_from_redis
 from redis_connector import write_to_redis
@@ -86,8 +87,13 @@ def send_standart_movie_info(bot, chat_id, redis_key, href):
     if movie.poster is not None:
         bot.sendPhoto(chat_id, movie.poster)
 
-    bot.sendMessage(chat_id, movie.title + '\n\n\n' + movie.trailer + '\n\n\n' + movie.description + '\n\n\nHref: ' + href,
-                    reply_markup = action_reply_markup)
+    content = movie.title + '\n\n\n' + movie.trailer + '\n\n\n' + movie.description + '\n\n\nHref: ' + href
+
+    chunks = chunkstring(content)
+    for chunk in chunks[:-1]:
+        bot.sendMessage(chat_id, chunk)
+
+    bot.sendMessage(chat_id, chunks[-1], reply_markup = action_reply_markup)
 
     movie_info = {}
     movie_info['Poster'] = movie.poster
@@ -107,6 +113,8 @@ def send_advanced_movie_info(bot, chat_id, advanced_info, redis_key, href):
 
     if advanced_info['Poster'] is not None:
         bot.sendPhoto(chat_id, advanced_info['Poster'])
+
+    #schedule = get_movie_today_schedule()
 
     bot.sendMessage(chat_id, advanced_info['Title'] + '\n\n\nTrailer: ' + trailer + '\n\n\n' + \
                     stringify_advanced_movie_info(advanced_info) + '\n\n\nHref: ' + href, reply_markup = action_reply_markup_extended)
@@ -154,12 +162,16 @@ def send_movie_info(bot, chat_id):
         users[chat_id].imdb_id = cached_movie_info.get('imdbID')
         users[chat_id].current_title = movie.title
 
+        content = cached_movie_info['Title'] + '\n\n\n' + stringify_advanced_movie_info(cached_movie_info) + '\n\n\n'
+
+        chunks = chunkstring(content)
+        for chunk in chunks[:-1]:
+            bot.sendMessage(chat_id, chunk)
+
         if 'imdbID' in cached_movie_info:
-            bot.sendMessage(chat_id, cached_movie_info['Title'] + '\n\n\n' + stringify_advanced_movie_info(cached_movie_info) + \
-                            '\n\n\n', reply_markup = action_reply_markup_extended)
+            bot.sendMessage(chat_id, chunks[-1], reply_markup = action_reply_markup_extended)
         else:
-            bot.sendMessage(chat_id, cached_movie_info['Title'] + '\n\n\n' + stringify_advanced_movie_info(cached_movie_info) + \
-                            '\n\n\n', reply_markup = action_reply_markup)
+            bot.sendMessage(chat_id, chunks[-1], reply_markup = action_reply_markup)
         return
 
     advanced_info = get_advanced_movie_info_by_title(movie.title)
@@ -217,7 +229,7 @@ def update_movies(chat_id):
     elif tracker == 'mine':
         movies = get_top_movies(top_movies_xml_path)
     elif tracker == 'act':
-        movies = kudago_adapter.get_actual_movies(genre)
+        movies = kudago_adapter.get_filtered_actual_movies(genre)
     print('iop')
     write_to_redis(redis_key, movies, True)
     print('iop')
@@ -226,10 +238,31 @@ def update_movies(chat_id):
 def cache_page(tracker, genre, page):
 
     redis_key = str(tracker) + delimiter + str(genre) + delimiter + str(page)
-    cached_movies = get_from_redis(redis_key)
 
+    print('Caching page {}'.format(redis_key))
+    print('---a')
+    cached_movies = get_from_redis(redis_key)
+    print('---b')
     if cached_movies is not None:
+        print('already have it')
         return
+    print('---c')
+    if tracker == 'yup':
+        movies = ya.get_movies_by_genre(genre, page)
+    elif tracker == 'pbay':
+        movies = pa.get_movies_by_page(page)
+    elif tracker == 'mine':
+        movies = get_top_movies(top_movies_xml_path)
+    elif tracker == 'act':
+        movies = kudago_adapter.get_actual_movies(genre)
+    print('---d')
+    print(movies)
+    write_to_redis(redis_key, movies, True)
+    print('---e')
+
+def load_page(tracker, genre, page):
+
+    redis_key = str(tracker) + delimiter + str(genre) + delimiter + str(page)
 
     if tracker == 'yup':
         movies = ya.get_movies_by_genre(genre, page)
@@ -240,7 +273,7 @@ def cache_page(tracker, genre, page):
     elif tracker == 'act':
         movies = kudago_adapter.get_actual_movies(genre)
 
-    print(movies)
+    return movies
     #write_to_redis(redis_key, movies, True)
 
 def increase_index(chat_id):

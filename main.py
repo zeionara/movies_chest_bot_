@@ -98,22 +98,23 @@ import expire_controller
 #constants
 from constants import telegram_token
 #handlers
-from command_handlers import select_genre, select_tracker, start_search, subscribe
+from command_handlers import select_genre, select_tracker, start_search, subscribe, unsubscribe
 from callback_handlers import handle_callback
 from error_handlers import print_error
 from message_handlers import handle_movie_request, handle_subscription_request
-
-thread = Thread(target = expire_controller.inspect_enhanced, args = (10, ))
-thread.start()
 
 def main():
 
     updater = Updater(telegram_token)
 
+    thread = Thread(target = expire_controller.inspect_enhanced, args = (updater.bot, ))
+    thread.start()
+
     updater.dispatcher.addHandler(CommandHandler('genre', select_genre))
     updater.dispatcher.addHandler(CommandHandler('tracker', select_tracker))
     updater.dispatcher.addHandler(CommandHandler('search', start_search))
     updater.dispatcher.addHandler(CommandHandler('subscribe', subscribe))
+    updater.dispatcher.addHandler(CommandHandler('unsubscribe', unsubscribe))
     updater.dispatcher.addHandler(CallbackQueryHandler(handle_callback))
     updater.dispatcher.addErrorHandler(print_error)
     updater.dispatcher.addHandler(MessageHandler(filters.TEXT, handle_movie_request))
