@@ -1,6 +1,7 @@
 #import sys
 #sys.path.append('../resources/')
-
+# -*- coding: utf-8 -*-
+#import datetime
 import shared
 
 import constants
@@ -8,6 +9,8 @@ from constants import interesting_cinemas
 from constants import cinemas_indexes
 from constants import cinemas_query_part
 from constants import seconds_in_day
+from constants import scp_schedule_folder, scp_schedule_path
+from constants import num_of_days_in_schedule, delay_between_request_sequence
 
 from collections import namedtuple
 
@@ -19,6 +22,8 @@ import time
 import datetime
 
 import requests
+
+from scp_connector import send_file, read_file
 
 MovieExtendedHeader = namedtuple('MovieExtendedHeader','title href id schedule')
 
@@ -47,12 +52,23 @@ def get_cinemas_query_part():
 def get_pretty_time(ugly_time):
 	return datetime.datetime.fromtimestamp(int(ugly_time)).strftime('%d %B %H:%M:%S')
 
+def get_pretty_date(ugly_time):
+	return datetime.datetime.fromtimestamp(int(ugly_time)).strftime('%d %B')
+
+def to_unix(date_time):
+    return time.mktime(date_time.timetuple())
 
 def get_whole_schedule():
 	if shared.whole_schedule is None:
 		shared.whole_schedule = {}
-		shared.whole_schedule['Mirage cinema'] = mirage_cinema_adapter.get_schedule()
-		shared.whole_schedule['Kinopik'] = kinopik_adapter.get_schedule()
+		today = datetime.datetime.now()
+		for day_number in range(num_of_days_in_schedule):
+			shared.whole_schedule[to_unix(today)] = {}
+			shared.whole_schedule[to_unix(today)]['Mirage cinema'] = mirage_cinema_adapter.get_schedule(today.year, today.month, today.day)
+			shared.whole_schedule[to_unix(today)]['Kinopik'] = kinopik_adapter.get_schedule(today.year, today.month, today.day)
+			today += datetime.timedelta(days=1)
+			print('day counted')
+			time.sleep(delay_between_request_sequence)
 	return shared.whole_schedule
 
 def get_movie_today_schedule(title):
@@ -65,6 +81,39 @@ def get_movie_today_schedule(title):
 			for seance in whole_schedule[cinema][title]:
 				result += ('\t%-32s\t%-15s\t%-4s\n' % (seance['location'], seance['time'], seance['price']))
 	return result
+
+def save_movie_today_schedule(title):
+
+	local_file_name = '../'+title+".html"
+	remote_file_name = scp_schedule_folder + '/' + title+".html"
+	href = scp_schedule_path + '/' + title+".html"
+
+	if read_file(remote_file_name):
+		return href
+
+	current_time = int(time.time())
+
+	title = cut_title(title)
+	whole_schedule = get_whole_schedule()
+	result = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body>'
+	for date in whole_schedule:
+		result += '<div><h1>' + get_pretty_date(date) + '</h1><table>'
+		#print(date)
+		for cinema in whole_schedule[date]:
+			#print('for ',cinema,' : ',whole_schedule[date][cinema])
+			if title in whole_schedule[date][cinema]:
+				result += '<tr><td><h2>' + cinema + '<h2></td></tr>'
+				for seance in whole_schedule[date][cinema][title]:
+					result += ('<td>%s</td><td>%s</td><td>%s</td></tr>' % (seance['location'], seance['time'], seance['price']))
+		result += '</table></div>'
+	result += '</body></html>'
+
+	with open(local_file_name, "w", encoding = 'utf8') as text_file:
+		text_file.write(result)
+
+	send_file(local_file_name, remote_file_name)
+
+	return href
 
 def get_movie_schedule(id, days_before, days_after):
 	current_time = int(time.time())

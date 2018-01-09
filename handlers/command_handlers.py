@@ -36,6 +36,9 @@ def select_genre(bot, update):
     return response
 
 def select_tracker(bot, update):
+    if update.message.chat_id in users and not users[update.message.chat_id].searching_movies:
+        users[update.message.chat_id].searching_movies = True
+
     response = bot.sendMessage(chat_id = update.message.chat_id, text = msg_choose_tracker, reply_markup = tracker_reply_markup)
     return response
 

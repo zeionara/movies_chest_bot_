@@ -10,6 +10,8 @@ buttons_per_string_in_genres_markup = 3
 max_message_length = 1500
 top_movies_xml_path = 'resources/top_movies.xml'
 
+num_of_days_in_schedule = 1
+
 delay_between_request_sequence = 5
 delay_between_notifying_users = 1
 
@@ -62,3 +64,11 @@ redis_host = os.environ['barbershop_redis_host']
 redis_port = int(os.environ['barbershop_redis_port'])
 telegram_token = os.environ['movies_chest_bot_token']
 developer_key = os.environ['zeionara_google_developer_key']
+
+scp_host = os.environ['scp_host']
+scp_port = int(os.environ['scp_port'])
+scp_username = os.environ['scp_username']
+scp_password = os.environ['scp_password']
+
+scp_schedule_folder = '/home/s207602/public_html/movies_chest_bot_schedules'
+scp_schedule_path = 'https://se.ifmo.ru/~s207602/movies_chest_bot_schedules'

@@ -59,6 +59,7 @@ def get_advanced_movie_info_by_title(title):
     #Title comes in format: "Good time (2017)"
 
     arr = title.split(' (')
+    name_original = arr[0]
     name = arr[0].replace(' ','+')
 
     try:
@@ -71,6 +72,9 @@ def get_advanced_movie_info_by_title(title):
     response = requests.get(url)
     result = ''
     dicti = response.json()
+
+    if 'Title' not in dicti:
+        dicti['Title'] = name_original
 
     return dicti
 
@@ -126,7 +130,10 @@ def send_advanced_movie_info(bot, chat_id, advanced_info, redis_key, href):
 
 def send_advanced_single_movie_info(bot, chat_id, advanced_info):
 
-    redis_key = advanced_info['Title'] + ' (' + advanced_info['Year'] + ')'
+    if 'Year' in advanced_info:
+        redis_key = advanced_info['Title'] + ' (' + advanced_info['Year'] + ')'
+    else:
+        redis_key = advanced_info['Title']
     trailer = youtube_adapter.get_trailer(advanced_info['Title'])
 
     users[chat_id].current_title = redis_key

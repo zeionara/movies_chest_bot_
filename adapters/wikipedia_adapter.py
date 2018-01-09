@@ -2,6 +2,8 @@ import re
 import wikipedia
 
 def get_movie_details(name):
+    print('Searching in wiki for ',name)
+    print(wikipedia.search(name))
     title = wikipedia.search(name)[0]
     page = wikipedia.page(title)
     content = page.content
