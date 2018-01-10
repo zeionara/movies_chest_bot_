@@ -16,12 +16,12 @@ def chunkstring(string):
 
 def stringify_advanced_movie_info(info):
     result = ''
-
+    print('stringifying ',info)
     if 'Trailer' in info:
         result += 'Trailer : ' + info['Trailer'] + '\n\n'
 
     for item in info:
         if item not in forbidden_movie_fields and type(info.get(item)) == type('ok') and info.get(item) != 'N/A':
             result += item + ' : ' + info[item] + '\n\n'
-
+    print('stringifyed ',result)
     return result

@@ -33,13 +33,15 @@ description_beginning = '<span class="_reachbanner_"><div class="brand_words fil
 description_ending = '</div>'
 title_beginning = '<h1 class="moviename-big" itemprop="name">'
 title_ending = '</h1>'
-year_beginning = 'год'
+poster_beginning = '<img width="205" src="'
+poster_ending = '"'
+year_beginning = '<td class="type">год</td>'
 
 movie_attributes_beginning = {'country' : 'страна', 'slogan' : 'слоган', 'director' : 'режиссер',
                                 'scenarist' : 'сценарий', 'producer' : 'продюсер', 'genre' : 'жанр', 'budget' : '<td class="type">бюджет',
                                  'MPAA rating' : 'рейтинг MPAA'}
 
-movie_attributes_ending = {'genre' : '<a class="wordLinks"'}
+movie_attributes_ending = {'genre' : '</td></tr>'}
 
 movie_info_universal_ending = '</tr>'
 
@@ -66,12 +68,16 @@ def parse_reviews(page):
 
 def parse_movie_info(content):
     result = {}
-    try:
-        result['Description'] = html.unescape(get_middle(content, description_beginning, description_ending)).replace(u'\xa0',' ')
-        result['Title'] = remove_tags(html.unescape(get_middle(content, title_beginning, title_ending)).replace(u'\xa0',' ')) + ' (' + \
-                        remove_tags(html.unescape(get_middle(content, year_beginning, movie_info_universal_ending)).replace(u'\xa0',' ')) + ')'
-    except IndexError:
-        pass
+    #try:
+    result['Description'] = html.unescape(get_middle(content, description_beginning, description_ending)).replace(u'\xa0',' ')
+    #if len(content.split(year_beginning)) > 1:
+    result['Title'] = remove_tags(html.unescape(get_middle(content, title_beginning, title_ending)).replace(u'\xa0',' ')) + ' (' + \
+                        remove_tags(html.unescape(get_middle(content, year_beginning, movie_info_universal_ending)).replace(u'\xa0',' ')).lstrip().rstrip() + ')'
+    #else:
+        #result['Title'] = remove_tags(html.unescape(get_middle(content, title_beginning, title_ending)).replace(u'\xa0',' '))
+    result['Poster'] = get_middle(content, poster_beginning, poster_ending)
+    #except IndexError:
+    #    pass
     for key in movie_attributes_beginning:
         try:
             if key not in movie_attributes_ending:

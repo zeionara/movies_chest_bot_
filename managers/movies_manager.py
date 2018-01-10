@@ -26,8 +26,11 @@ from string_converting import stringify_advanced_movie_info
 
 import youtube_adapter
 import kudago_adapter
+import kinopoisk_adapter
 
 from top_movies_adapter import get_top_movies
+
+from actual_movies_filter import save_movie_today_schedule
 
 Movie = namedtuple('Movie','title poster description trailer')
 MovieHeader = namedtuple('MovieHeader','title href')
@@ -73,6 +76,12 @@ def get_advanced_movie_info_by_title(title):
     result = ''
     dicti = response.json()
 
+    if dicti['Response'] == 'False':
+        kinopoisk_dicti = kinopoisk_adapter.get_movie_info(title)
+        kinopoisk_dicti['Response'] = 'True'
+        if kinopoisk_dicti is not None:
+            return kinopoisk_dicti
+
     if 'Title' not in dicti:
         dicti['Title'] = name_original
 
@@ -116,20 +125,27 @@ def send_advanced_movie_info(bot, chat_id, advanced_info, redis_key, href):
     trailer = youtube_adapter.get_trailer(advanced_info['Title'])
 
     if advanced_info['Poster'] is not None:
+        print('poster : ',advanced_info['Poster'])
         bot.sendPhoto(chat_id, advanced_info['Poster'])
 
     #schedule = get_movie_today_schedule()
-
+    print(advanced_info)
+    print(trailer)
+    print(stringify_advanced_movie_info(advanced_info))
+    print(href)
     bot.sendMessage(chat_id, advanced_info['Title'] + '\n\n\nTrailer: ' + trailer + '\n\n\n' + \
                     stringify_advanced_movie_info(advanced_info) + '\n\n\nHref: ' + href, reply_markup = action_reply_markup_extended)
 
     advanced_info['Trailer'] = trailer
     advanced_info['Href'] = href
 
-    write_to_redis(redis_key, advanced_info, False)
+    if 'Schedule' in advanced_info:
+        write_to_redis(redis_key, advanced_info, True)
+    else:
+        write_to_redis(redis_key, advanced_info, False)
 
 def send_advanced_single_movie_info(bot, chat_id, advanced_info):
-
+    print(advanced_info)
     if 'Year' in advanced_info:
         redis_key = advanced_info['Title'] + ' (' + advanced_info['Year'] + ')'
     else:
@@ -164,8 +180,9 @@ def send_movie_info(bot, chat_id):
     cached_movie_info = get_from_redis(movie.title)
 
     if cached_movie_info is not None:
-
-        bot.sendPhoto(chat_id, cached_movie_info['Poster'])
+        print(cached_movie_info)
+        if cached_movie_info['Poster'] is not None:
+            bot.sendPhoto(chat_id, cached_movie_info['Poster'])
         users[chat_id].imdb_id = cached_movie_info.get('imdbID')
         users[chat_id].current_title = movie.title
 
@@ -183,6 +200,8 @@ def send_movie_info(bot, chat_id):
 
     advanced_info = get_advanced_movie_info_by_title(movie.title)
 
+    if users[chat_id].tracker == 'act':
+        advanced_info['Schedule'] = save_movie_today_schedule(advanced_info['Title'])
     if users[chat_id].tracker == 'yup' or users[chat_id].tracker == 'mine' or users[chat_id].tracker == 'act':
         href = movie.href
     elif users[chat_id].tracker == 'pbay':

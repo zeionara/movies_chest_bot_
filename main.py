@@ -103,7 +103,10 @@ from callback_handlers import handle_callback
 from error_handlers import print_error
 from message_handlers import handle_movie_request, handle_subscription_request
 
+
+
 def main():
+    #save_all_movie_schedules()
 
     updater = Updater(telegram_token)
 

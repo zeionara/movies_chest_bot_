@@ -4,6 +4,8 @@
 #import datetime
 import shared
 
+import os
+
 import constants
 from constants import interesting_cinemas
 from constants import cinemas_indexes
@@ -82,18 +84,21 @@ def get_movie_today_schedule(title):
 				result += ('\t%-32s\t%-15s\t%-4s\n' % (seance['location'], seance['time'], seance['price']))
 	return result
 
+
 def save_movie_today_schedule(title):
+	title = cut_title(title)
 
-	local_file_name = '../'+title+".html"
-	remote_file_name = scp_schedule_folder + '/' + title+".html"
-	href = scp_schedule_path + '/' + title+".html"
+	print('saving_movie_today_schedule')
+	local_file_name = '../'+title.replace(' ','+')+".html"
+	remote_file_name = scp_schedule_folder + '/' + title.replace(' ','+')+".html"
+	href = scp_schedule_path + '/' + title.replace(' ','+')+".html"
 
-	if read_file(remote_file_name):
+	if (title in shared.written_schedules) or (read_file(remote_file_name)):
 		return href
 
 	current_time = int(time.time())
 
-	title = cut_title(title)
+
 	whole_schedule = get_whole_schedule()
 	result = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body>'
 	for date in whole_schedule:
@@ -108,12 +113,60 @@ def save_movie_today_schedule(title):
 		result += '</table></div>'
 	result += '</body></html>'
 
+	print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+
 	with open(local_file_name, "w", encoding = 'utf8') as text_file:
 		text_file.write(result)
 
 	send_file(local_file_name, remote_file_name)
 
+	#os.remove(local_file_name)
+
 	return href
+
+def save_all_movie_schedules():
+    written = []
+    current_time = int(time.time())
+    whole_schedule = get_whole_schedule()
+    for date_external in whole_schedule:
+        for cinema_external in whole_schedule[date_external]:
+            for title_external in whole_schedule[date_external][cinema_external]:
+                title = cut_title(title_external)
+                if title in written:
+                    continue
+                print('written ',title)
+                written.append(title)
+                print('saving_movie_today_schedule')
+                local_file_name = '../'+title.replace(' ','+')+".html"
+                remote_file_name = scp_schedule_folder + '/' + title.replace(' ','+')+".html"
+                href = scp_schedule_path + '/' + title.replace(' ','+')+".html"
+
+            	#whole_schedule = get_whole_schedule()
+                result = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body>'
+                for date in whole_schedule:
+                    result += '<div><h1>' + get_pretty_date(date) + '</h1><table>'
+                    #print(date)
+                    for cinema in whole_schedule[date]:
+                        #print('for ',cinema,' : ',whole_schedule[date][cinema])
+                        if title in whole_schedule[date][cinema]:
+                            result += '<tr><td><h2>' + cinema + '<h2></td></tr>'
+                            for seance in whole_schedule[date][cinema][title]:
+                                result += ('<td>%s</td><td>%s</td><td>%s</td></tr>' % (seance['location'], seance['time'], seance['price']))
+                    result += '</table></div>'
+                result += '</body></html>'
+
+                print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+
+                with open(local_file_name, "w", encoding = 'utf8') as text_file:
+                    text_file.write(result)
+
+                send_file(local_file_name, remote_file_name)
+
+                os.remove(local_file_name)
+
+    shared.written_schedules = [name for name in written]
+    #return href
+
 
 def get_movie_schedule(id, days_before, days_after):
 	current_time = int(time.time())

@@ -20,9 +20,9 @@ first_page = 1
 
 seconds_in_day = 86400
 
-max_lifetime = 660
+max_lifetime = 3600
 max_memory = 50240
-checking_interval = 300
+checking_interval = 3600
 
 interesting_cinemas = ['мираж','дом кино','пик','великан парк','каро']
 cinemas_indexes = {}

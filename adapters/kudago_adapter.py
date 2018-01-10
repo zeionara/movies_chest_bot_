@@ -79,7 +79,7 @@ def get_filtered_actual_movies(genre):
             #    print(whole_schedule['Mirage cinema'][cutted_title])
             #if cutted_title in whole_schedule['Kinopik']:
             #    print(whole_schedule['Kinopik'][cutted_title])
-
+    print(result)
     return result
 
 #print(save_movie_today_schedule('Величайший шоумен'))

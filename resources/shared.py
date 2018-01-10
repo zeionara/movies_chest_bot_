@@ -6,5 +6,6 @@ pa = PiratebayAdapter()
 users = {}
 
 whole_schedule = None
+written_schedules = []
 
 subscribed_to = {}

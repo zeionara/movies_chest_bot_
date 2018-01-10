@@ -43,21 +43,21 @@ def handle_subscription_request(bot, update):
              if any_keyword in selected_tracker_names:
                  selected_tracker_names = []
                  for tracker_name in actual_tracker_names:
-                     selected_trackers.append(tracker_name)
+                     selected_trackers.append(trackers[tracker_names.index(tracker_name)])
                      #genred = True
-             #else:
-             for tracker_name in selected_tracker_names:
-                 print(tracker_name)
-                 print(actual_tracker_names)
-                 #tracker_name = tracker_name.lstrip().rstrip()
-                 if not (tracker_name in actual_tracker_names):
-                     print('Error in tracker')
-                     bot.sendMessage(chat_id = chat_id, text = msg_entered_wrong, reply_markup = yes_no_reply_markup)
-                        #users[chat_id].state = states['undefined']
-                     return
-                 if trackers[tracker_names.index(tracker_name)] in genred_trackers:
-                     genred = True
-                 selected_trackers.append(trackers[tracker_names.index(tracker_name)])
+             else:
+                 for tracker_name in selected_tracker_names:
+                     print(tracker_name)
+                     print(actual_tracker_names)
+                     #tracker_name = tracker_name.lstrip().rstrip()
+                     if not (tracker_name in actual_tracker_names):
+                         print('Error in tracker')
+                         bot.sendMessage(chat_id = chat_id, text = msg_entered_wrong, reply_markup = yes_no_reply_markup)
+                            #users[chat_id].state = states['undefined']
+                         return
+                     if trackers[tracker_names.index(tracker_name)] in genred_trackers:
+                         genred = True
+                     selected_trackers.append(trackers[tracker_names.index(tracker_name)])
              print('state bef: ',users[chat_id].state)
              print('set to ', states['choosing_genre_to_subscribe'])
              if users[chat_id].state == states['choosing_tracker_to_subscribe']:

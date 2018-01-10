@@ -27,6 +27,8 @@ from movies_manager import load_page
 
 from subscriptions_manager import notify_all
 
+from actual_movies_filter import save_all_movie_schedules
+
 executing = True
 
 def get_key(key):
@@ -113,6 +115,7 @@ def print_cached_objects(cached_objects):
 
 def inspect_enhanced(arg):
     while(executing):
+        save_all_movie_schedules()
 
         current_time = datetime.datetime.now()
         pip = redis_connection.pipeline()
