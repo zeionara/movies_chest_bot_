@@ -8,7 +8,11 @@ def remove_tags(raw_html):
 
 def get_middle(string, left_part, right_part):
     #print('fucking length',len(string.split(left_part)))
-    return string.split(left_part)[1].split(right_part)[0]
+    try:
+        return string.split(left_part)[1].split(right_part)[0]
+    except IndexError:
+        print('get_middle error')
+        return 'n/a'
 
 def delete_slashes(string):
     return string.replace('\\','').replace('/','')

@@ -45,11 +45,15 @@ class PiratebayAdapter:
     def get_href(self, movie_raw):
         return get_middle(movie_raw, 'href="', '"')
 
-    def get_movies(self, section_raw):
+    def rreduce(self, title):
+        return (''.join(e for e in title if e.isalnum())).lower()
 
+    def get_movies(self, section_raw):
+        movie_reduced_titles = []
         movie_titles_raw = section_raw.split('<div class="detName">')[1:]
         movies = []
         movie_headers = []
+        movie_reduced_headers = []
 
         for movie_title_raw in movie_titles_raw:
             try:
@@ -59,11 +63,17 @@ class PiratebayAdapter:
                 print(e)
                 continue
 
-            print(title)
+            movie_reduced_title = self.rreduce(title)
 
-            movie_header = MovieHeader(title, href)
-            movie_headers.append(movie_header)
+            if movie_reduced_title not in movie_reduced_titles:
+                print(title)
+                movie_header = MovieHeader(title, href)
+                movie_headers.append(movie_header)
+                movie_reduced_titles.append(movie_reduced_title)
 
+        #print(movie_headers)
+        #print('............................................')
+        #print(movie_reduced_headers)
         return movie_headers
 
     def get_movies_by_page(self, page = 1):

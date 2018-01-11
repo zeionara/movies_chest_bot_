@@ -115,7 +115,7 @@ def print_cached_objects(cached_objects):
 
 def inspect_enhanced(arg):
     while(executing):
-        save_all_movie_schedules()
+        #save_all_movie_schedules()
 
         current_time = datetime.datetime.now()
         pip = redis_connection.pipeline()

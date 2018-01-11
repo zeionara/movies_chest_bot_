@@ -10,13 +10,15 @@ buttons_per_string_in_genres_markup = 3
 max_message_length = 1500
 top_movies_xml_path = 'resources/top_movies.xml'
 
-num_of_days_in_schedule = 1
+num_of_days_in_schedule = 5
 
 delay_between_request_sequence = 5
 delay_between_notifying_users = 1
 
 any_keyword = 'any'
 first_page = 1
+
+actual_movies_page_size = 20
 
 seconds_in_day = 86400
 

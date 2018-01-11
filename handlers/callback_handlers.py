@@ -74,7 +74,7 @@ def handle_callback(bot, update):
             set_tracker(chat_id, callback_value)
             bot.sendMessage(chat_id = chat_id, text = 'Ok, tracker has been switched')
 
-            if callback_value == 'pbay' or callback_value == 'mine':
+            if callback_value == 'pbay' or callback_value == 'mine' or callback_value == 'act':
                 send_first_movie_msg(bot, chat_id, callback_value)
 
         elif callback_type == 'action':

@@ -32,6 +32,8 @@ from top_movies_adapter import get_top_movies
 
 from actual_movies_filter import save_movie_today_schedule
 
+import afisha_adapter
+
 Movie = namedtuple('Movie','title poster description trailer')
 MovieHeader = namedtuple('MovieHeader','title href')
 
@@ -78,8 +80,8 @@ def get_advanced_movie_info_by_title(title):
 
     if dicti['Response'] == 'False':
         kinopoisk_dicti = kinopoisk_adapter.get_movie_info(title)
-        kinopoisk_dicti['Response'] = 'True'
         if kinopoisk_dicti is not None:
+            kinopoisk_dicti['Response'] = 'True'
             return kinopoisk_dicti
 
     if 'Title' not in dicti:
@@ -139,10 +141,10 @@ def send_advanced_movie_info(bot, chat_id, advanced_info, redis_key, href):
     advanced_info['Trailer'] = trailer
     advanced_info['Href'] = href
 
-    if 'Schedule' in advanced_info:
-        write_to_redis(redis_key, advanced_info, True)
-    else:
-        write_to_redis(redis_key, advanced_info, False)
+    #if 'Schedule' in advanced_info:
+    #    write_to_redis(redis_key, advanced_info, True)
+
+    write_to_redis(redis_key, advanced_info, False)
 
 def send_advanced_single_movie_info(bot, chat_id, advanced_info):
     print(advanced_info)
@@ -181,6 +183,10 @@ def send_movie_info(bot, chat_id):
 
     if cached_movie_info is not None:
         print(cached_movie_info)
+
+        if 'Schedule' in cached_movie_info:
+            afisha_adapter.make_html_schedule(movie.id, bot, chat_id)
+
         if cached_movie_info['Poster'] is not None:
             bot.sendPhoto(chat_id, cached_movie_info['Poster'])
         users[chat_id].imdb_id = cached_movie_info.get('imdbID')
@@ -201,7 +207,12 @@ def send_movie_info(bot, chat_id):
     advanced_info = get_advanced_movie_info_by_title(movie.title)
 
     if users[chat_id].tracker == 'act':
-        advanced_info['Schedule'] = save_movie_today_schedule(advanced_info['Title'])
+        schedule_href = afisha_adapter.make_html_schedule(movie.id)
+        advanced_info['Schedule'] = schedule_href
+
+        #if 'Schedule' in advanced_info:
+        #    write_to_redis(redis_key, advanced_info, True)
+
     if users[chat_id].tracker == 'yup' or users[chat_id].tracker == 'mine' or users[chat_id].tracker == 'act':
         href = movie.href
     elif users[chat_id].tracker == 'pbay':
@@ -213,7 +224,7 @@ def send_movie_info(bot, chat_id):
         send_advanced_movie_info(bot, chat_id, advanced_info, movie.title, href)
 
 def send_first_movie_msg(bot, chat_id, tracker):
-    if tracker == 'pbay' or tracker == 'mine':
+    if tracker == 'pbay' or tracker == 'mine' or tracker == 'act':
         genre = 'any'
         users[chat_id].genre = genre
         users[chat_id].state = states['iterating']
@@ -255,7 +266,8 @@ def update_movies(chat_id):
     elif tracker == 'mine':
         movies = get_top_movies(top_movies_xml_path)
     elif tracker == 'act':
-        movies = kudago_adapter.get_filtered_actual_movies(genre)
+        movies = afisha_adapter.get_actual_movies(page)
+        #movies = kudago_adapter.get_filtered_actual_movies(genre)
     print('iop')
     write_to_redis(redis_key, movies, True)
     print('iop')
@@ -280,7 +292,8 @@ def cache_page(tracker, genre, page):
     elif tracker == 'mine':
         movies = get_top_movies(top_movies_xml_path)
     elif tracker == 'act':
-        movies = kudago_adapter.get_actual_movies(genre)
+        movies = afisha_adapter.get_actual_movies(page)
+        #movies = kudago_adapter.get_actual_movies(genre)
     print('---d')
     print(movies)
     write_to_redis(redis_key, movies, True)
@@ -297,7 +310,8 @@ def load_page(tracker, genre, page):
     elif tracker == 'mine':
         movies = get_top_movies(top_movies_xml_path)
     elif tracker == 'act':
-        movies = kudago_adapter.get_actual_movies(genre)
+        movies = afisha_adapter.get_actual_movies(page)
+        #movies = kudago_adapter.get_actual_movies(genre)
 
     return movies
     #write_to_redis(redis_key, movies, True)

@@ -49,6 +49,9 @@ def parse_audience_reviews(page):
     return reviews
 
 def get_reviews_by_page_info(name, year, page, critics, include_year):
+    if int(year) < 1800:
+        include_year = False
+
     if include_year:
         if critics:
             response = requests.get(url + '/m/{}_{}/reviews/?page={}&sort='.format(name, year, page))
@@ -74,7 +77,10 @@ def get_reviews(title, critics = True, page = 1):
 
     arr = title.split(' (')
     name = arr[0].replace(' ',delimiter).lower().replace('-','_')
-    year = arr[1].replace(')','').replace(' ','')
+    if len(arr) > 1:
+        year = arr[1].replace(')','').replace(' ','')
+    else:
+        year = '0'
 
     reviews = get_reviews_by_page_info(name, year, page, critics, False)
     if len(reviews) == 0:
