@@ -1,4 +1,6 @@
-from shared import users
+#from shared import users
+from user import get_user
+from db_connection_manager import get_session
 
 from keyboard_markups import action_reply_markup
 
@@ -16,106 +18,131 @@ from reviews_manager import increase_reviews_index
 from wiki_manager import send_wiki_info
 
 def handle_next_action(chat_id, provider, index, searching_movies):
+    user = get_user(chat_id)
+    session = get_session()
+
     if searching_movies:
         increase_index(chat_id)
     else:
         if provider == 'rt':
             increase_reviews_index(chat_id)
         elif provider == 'imdb' or provider == 'kp':
-            users[chat_id].review_indexes[index] += 1
+            user.review_indexes[index] += 1
+
+    session.flush()
 
 def hanle_flush_action(chat_id, provider, index, searching_movies):
-    user = users[chat_id]
+    user = get_user(chat_id)
+    session = get_session()
 
     if searching_movies and user.pages[tracker][genre] == 1:
-        users[chat_id].indexes[tracker][genre] = 0
+        user.indexes[tracker][genre] = 0
     elif searching_movies:
-        users[chat_id].pages[tracker][genre] = 1
+        user.pages[tracker][genre] = 1
         update_movies(chat_id)
     else:
         if provider == 'rt':
-            users[chat_id].review_indexes[index][users[chat_id].reviews_group] = 0
+            user.review_indexes[index][user.reviews_group] = 0
         elif provider == 'kp' or provider == 'imdb':
-            users[chat_id].review_indexes[index] = 0
+            user.review_indexes[index] = 0
+
+    session.flush()
 
 def handle_imdbrev_action(chat_id):
-    if users[chat_id].imdb_id is not None:
-        provider = 'imdb'
-        users[chat_id].reviews_provider = provider
+    user = get_user(chat_id)
+    session = get_session()
 
-        id = users[chat_id].imdb_id
+    if user.imdb_id is not None:
+        provider = 'imdb'
+        user.reviews_provider = provider
+
+        id = user.imdb_id
         index = get_movie_review_list_index(provider, id)
-        users[chat_id].searching_movies = False
+        user.searching_movies = False
 
         update_reviews(chat_id)
 
-        if users[chat_id].review_indexes.get(index) is None:
-            users[chat_id].review_indexes[index] = 0
+        if user.review_indexes.get(index) is None:
+            user.review_indexes[index] = 0
         else:
-            users[chat_id].review_indexes[index] += 1
+            user.review_indexes[index] += 1
+
+    session.flush()
 
 def handle_kprev_action(chat_id):
-    provider = 'kp'
-    users[chat_id].reviews_provider = provider
+    user = get_user(chat_id)
+    session = get_session()
 
-    id = users[chat_id].current_title
+    provider = 'kp'
+    user.reviews_provider = provider
+
+    id = user.current_title
     index = get_movie_review_list_index(provider, id)
-    users[chat_id].searching_movies = False
+    user.searching_movies = False
 
     update_reviews(chat_id)
 
-    if users[chat_id].review_indexes.get(index) is None:
-        users[chat_id].review_indexes[index] = 0
+    if user.review_indexes.get(index) is None:
+        user.review_indexes[index] = 0
     else:
-        print(users[chat_id].review_indexes)
+        print(user.review_indexes)
         print(index)
-        users[chat_id].review_indexes[index] += 1
+        user.review_indexes[index] += 1
+
+    session.flush()
 
 def handle_rtrev_action(chat_id, action):
+    user = get_user(chat_id)
+    session = get_session()
+
     if action == 'rtcrev':
-        users[chat_id].reviews_group = 'critics'
+        user.reviews_group = 'critics'
     else:
-        users[chat_id].reviews_group = 'audience'
+        user.reviews_group = 'audience'
 
     provider = 'rt'
-    users[chat_id].reviews_provider = provider
+    user.reviews_provider = provider
 
-    id = users[chat_id].current_title
+    id = user.current_title
     index = get_movie_review_list_index(provider, id)
-    users[chat_id].searching_movies = False
+    user.searching_movies = False
 
-    if users[chat_id].review_pages.get(index) is None:
-        page = users[chat_id].review_pages[index] = {}
-    if users[chat_id].review_pages[index].get(users[chat_id].reviews_group) is None:
-        users[chat_id].review_pages[index][users[chat_id].reviews_group] = 1
+    if user.review_pages.get(index) is None:
+        page = user.review_pages[index] = {}
+    if user.review_pages[index].get(user.reviews_group) is None:
+        user.review_pages[index][user.reviews_group] = 1
 
     update_reviews(chat_id)
 
-    if users[chat_id].review_indexes.get(index) is None:
-        users[chat_id].review_indexes[index] = {}
-    if users[chat_id].review_indexes[index].get(users[chat_id].reviews_group) is None:
-        users[chat_id].review_indexes[index][users[chat_id].reviews_group] = 0
+    if user.review_indexes.get(index) is None:
+        user.review_indexes[index] = {}
+    if user.review_indexes[index].get(user.reviews_group) is None:
+        user.review_indexes[index][user.reviews_group] = 0
     else:
         increase_reviews_index(chat_id)
 
-def handle_action(chat_id, action, bot):
+    session.flush()
 
-    searching_movies = users[chat_id].searching_movies
+def handle_action(chat_id, action, bot):
+    user = get_user(chat_id)
+    session = get_session()
+
+    searching_movies = user.searching_movies
 
     changing_iterating_state = action == 'imdbrev' or action == 'kprev' or action == 'rtcrev' or action == 'rtarev' or action == 'wiki'
 
-    if users.get(chat_id) is None and searching_movies and not changing_iterating_state:
+    if user is None and searching_movies and not changing_iterating_state:
         bot.sendMessage(chat_id = chat_id, text = msg_tracker_is_not_set)
         return
-    elif users[chat_id].genre is None and searching_movies and not changing_iterating_state:
+    elif user.genre is None and searching_movies and not changing_iterating_state:
         bot.sendMessage(chat_id = chat_id, text = msg_genre_is_not_set)
         return
 
     if searching_movies and not changing_iterating_state:
-        tracker = users[chat_id].tracker
-        genre = users[chat_id].genre
+        tracker = user.tracker
+        genre = user.genre
 
-    provider = users[chat_id].reviews_provider
+    provider = user.reviews_provider
 
     id = get_movie_id(chat_id)
     index = get_movie_review_list_index(provider, id)
@@ -131,13 +158,15 @@ def handle_action(chat_id, action, bot):
     elif (action == 'rtcrev' or action == 'rtarev'):
         handle_rtrev_action(chat_id, action)
     elif action == 'imdbrevexit':
-        users[chat_id].searching_movies = True
+        user.searching_movies = True
         increase_index(chat_id)
     elif action == 'wiki':
-        send_wiki_info(bot, chat_id, users[chat_id].current_title)
+        send_wiki_info(bot, chat_id, user.current_title)
         return
 
-    if users[chat_id].searching_movies:
+    if user.searching_movies:
         send_movie_info(bot, chat_id)
     else:
         send_review_info(bot, chat_id)
+
+    session.flush()

@@ -1,7 +1,9 @@
 import sys
 import traceback
 
-from shared import users
+#from shared import users
+from user import get_user, create_user
+from db_connection_manager import get_session
 
 from movies_manager import send_advanced_single_movie_info
 from movies_manager import get_advanced_movie_info_by_title
@@ -22,23 +24,27 @@ from threading import Thread
 from subscriptions_manager import get_subscribed_genres
 
 def handle_subscription_request(bot, update):
+    chat_id = update['message']['chat']['id']
+    user = get_user(chat_id)
+    session = get_session()
+
     print('fuvk')
     try:
-        chat_id = update['message']['chat']['id']
+
         objs = update['message']['text']
 
-        print('state: ',users[chat_id].state)
-        if users.get(chat_id) is not None and (users[chat_id].state == states['choosing_tracker_to_subscribe']\
-                                                or users[chat_id].state == states['choosing_tracker_to_unsubscribe']):
+        print('state: ',user.state)
+        if user is not None and (user.state == states['choosing_tracker_to_subscribe']\
+                                                or user.state == states['choosing_tracker_to_unsubscribe']):
              genred = False
              #send_advanced_single_movie_info(bot, chat_id, get_advanced_movie_info_by_title(title))
              selected_trackers = []
              selected_tracker_names = [tracker_name.lstrip().rstrip() for tracker_name in objs.split(tracker_names_delimiter)]
 
-             if users[chat_id].state == states['choosing_tracker_to_subscribe']:
+             if user.state == states['choosing_tracker_to_subscribe']:
                  actual_tracker_names = [tracker for tracker in tracker_names]
-             elif users[chat_id].state == states['choosing_tracker_to_unsubscribe']:
-                 actual_tracker_names = [tracker for tracker in users[chat_id].tmp]
+             elif user.state == states['choosing_tracker_to_unsubscribe']:
+                 actual_tracker_names = [tracker for tracker in user.tmp]
 
              if any_keyword in selected_tracker_names:
                  selected_tracker_names = []
@@ -58,44 +64,45 @@ def handle_subscription_request(bot, update):
                      if trackers[tracker_names.index(tracker_name)] in genred_trackers:
                          genred = True
                      selected_trackers.append(trackers[tracker_names.index(tracker_name)])
-             print('state bef: ',users[chat_id].state)
+             print('state bef: ',user.state)
              print('set to ', states['choosing_genre_to_subscribe'])
-             if users[chat_id].state == states['choosing_tracker_to_subscribe']:
-                 users[chat_id].state = states['choosing_genre_to_subscribe']
-             elif users[chat_id].state == states['choosing_tracker_to_unsubscribe']:
-                 users[chat_id].state = states['choosing_genre_to_unsubscribe']
-             users[chat_id].trackers_to_subscribe = selected_trackers
-             print('state after: ',users[chat_id].state)
+             if user.state == states['choosing_tracker_to_subscribe']:
+                 user.state = states['choosing_genre_to_subscribe']
+             elif user.state == states['choosing_tracker_to_unsubscribe']:
+                 user.state = states['choosing_genre_to_unsubscribe']
+             user.trackers_to_subscribe = selected_trackers
+             print('state after: ',user.state)
              if not genred:
 
                  response = bot.sendMessage(chat_id = chat_id, text = 'success!')
-                 if users[chat_id].state == states['choosing_genre_to_subscribe']:
+                 if user.state == states['choosing_genre_to_subscribe']:
                      #register_subscription(chat_id, selected_trackers, ['any'])
-                     thread = Thread(target = register_subscription, args = (chat_id, users[chat_id].trackers_to_subscribe, ['any']))
+                     thread = Thread(target = register_subscription, args = (chat_id, user.trackers_to_subscribe, ['any']))
                      thread.start()
-                 elif users[chat_id].state == states['choosing_genre_to_unsubscribe']:
-                     thread = Thread(target = unregister_subscription, args = (chat_id, users[chat_id].trackers_to_subscribe, ['any']))
+                 elif user.state == states['choosing_genre_to_unsubscribe']:
+                     thread = Thread(target = unregister_subscription, args = (chat_id, user.trackers_to_subscribe, ['any']))
                      thread.start()
 
-                 users[chat_id].state = states['undefined']
+                 user.state = states['undefined']
                  return
-             if users[chat_id].state == states['choosing_genre_to_subscribe']:
+             if user.state == states['choosing_genre_to_subscribe']:
                  response = bot.sendMessage(chat_id = chat_id, text = msg_choose_genre_to_subscripe + (tracker_names_delimiter+' ').join(genres_lower))
-             elif users[chat_id].state == states['choosing_genre_to_unsubscribe']:
+             elif user.state == states['choosing_genre_to_unsubscribe']:
                  subscribed_genres = get_subscribed_genres(chat_id)
-                 users[chat_id].tmp = subscribed_genres
+                 user.tmp = subscribed_genres
                  response = bot.sendMessage(chat_id = chat_id, text = msg_choose_genre_to_unsubscripe + (tracker_names_delimiter+' ').join(subscribed_genres))
+             session.flush()
              return response
 
-        elif users.get(chat_id) is not None and (users[chat_id].state == states['choosing_genre_to_subscribe'] \
-                                                or users[chat_id].state == states['choosing_genre_to_unsubscribe']):
+        elif user is not None and (user.state == states['choosing_genre_to_subscribe'] \
+                                                or user.state == states['choosing_genre_to_unsubscribe']):
              #send_advanced_single_movie_info(bot, chat_id, get_advanced_movie_info_by_title(title))
              selected_genres = [genre.lstrip().rstrip() for genre in objs.split(tracker_names_delimiter)]
 
-             if users[chat_id].state == states['choosing_genre_to_subscribe']:
+             if user.state == states['choosing_genre_to_subscribe']:
                  actual_genres = [genre for genre in genres_lower]
-             elif users[chat_id].state == states['choosing_genre_to_unsubscribe']:
-                 actual_genres = [genre for genre in users[chat_id].tmp]
+             elif user.state == states['choosing_genre_to_unsubscribe']:
+                 actual_genres = [genre for genre in user.tmp]
 
              print(selected_genres)
              if any_keyword in selected_genres:
@@ -116,18 +123,18 @@ def handle_subscription_request(bot, update):
 
              response = bot.sendMessage(chat_id = chat_id, text = 'success!')
              print(selected_genres)
-             print(users[chat_id].trackers_to_subscribe)
+             print(user.trackers_to_subscribe)
 
-             if users[chat_id].state == states['choosing_genre_to_subscribe']:
-                 thread = Thread(target = register_subscription, args = (chat_id, users[chat_id].trackers_to_subscribe, selected_genres))
+             if user.state == states['choosing_genre_to_subscribe']:
+                 thread = Thread(target = register_subscription, args = (chat_id, user.trackers_to_subscribe, selected_genres))
                  thread.start()
 
-             elif users[chat_id].state == states['choosing_genre_to_unsubscribe']:
-                 thread = Thread(target = unregister_subscription, args = (chat_id, users[chat_id].trackers_to_subscribe, selected_genres))
+             elif user.state == states['choosing_genre_to_unsubscribe']:
+                 thread = Thread(target = unregister_subscription, args = (chat_id, user.trackers_to_subscribe, selected_genres))
                  thread.start()
 
-             users[chat_id].state = states['undefined']
-
+             user.state = states['undefined']
+             session.flush()
              #register_subscription(chat_id, users[chat_id].trackers_to_subscribe, selected_genres)
              return response
 
@@ -137,17 +144,23 @@ def handle_subscription_request(bot, update):
         print(traceback.print_tb(sys.exc_info()[2]))
 
 def handle_movie_request(bot, update):
+    chat_id = update['message']['chat']['id']
+    user = get_user(chat_id)
+    session = get_session()
+
     print('ssss')
     try:
-        chat_id = update['message']['chat']['id']
+
         title = update['message']['text']
 
-        if users.get(chat_id) is not None and users[chat_id].state == states['searching']:
+        if user is not None and user.state == states['searching']:
              send_advanced_single_movie_info(bot, chat_id, get_advanced_movie_info_by_title(title))
 
-             users[chat_id].state = states['undefined']
+             user.state = states['undefined']
         else:
             handle_subscription_request(bot, update)
+
+        session.flush()
     except Exception:
         print(sys.exc_info()[1])
         print(traceback.print_tb(sys.exc_info()[2]))

@@ -3,7 +3,10 @@ import time
 from constants import genred_trackers, delimiter, any_keyword, first_page, trackers, genres_lower, \
                         tracker_names, delay_between_request_sequence, delay_between_notifying_users
 
-from shared import subscribed_to, users
+from shared import subscribed_to
+
+from user import get_user, create_user
+from db_connection_manager import get_session
 
 from movies_manager import cache_page, get_advanced_movie_info_by_title, send_advanced_single_movie_info
 

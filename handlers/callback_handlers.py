@@ -1,7 +1,11 @@
 import sys
 import traceback
 
-from shared import users
+#from shared import users
+
+from user import get_user, create_user
+from db_connection_manager import get_session
+
 from shared import pa
 from shared import ya
 
@@ -15,49 +19,62 @@ from movies_manager import send_first_movie_msg, update_movies, increase_index, 
 
 from string_converting import split
 
-from user import User
+#from user import User
 
 from constants import states
 
 from action_handlers import handle_action
 
 def set_tracker(chat_id, tracker):
+    user = get_user(chat_id)
+    session = get_session()
 
-    if users.get(chat_id) is None:
-        users[chat_id] = User(states['selecting_genre'], tracker)
+    if user is None:
+        user = create_user(chat_id, tracker, states['selecting_genre'])
     else:
-        users[chat_id].tracker = tracker
-        if users[chat_id].indexes.get(tracker) is None:
-            users[chat_id].indexes[tracker] = {}
-            users[chat_id].pages[tracker] = {}
+        user.tracker = tracker
+        if user.indexes.get(tracker) is None:
+            user.indexes[tracker] = {}
+            user.pages[tracker] = {}
+
+    session.flush()
 
 def set_genre(chat_id, genre, bot):
+    user = get_user(chat_id)
+    session = get_session()
 
-    if users.get(chat_id) is None:
+    if user is None:
         bot.sendMessage(chat_id = chat_id, text = msg_tracker_is_not_set)
         return
-    elif users.get(chat_id).tracker == 'pbay':
+    elif user.tracker == 'pbay':
         bot.sendMessage(chat_id = chat_id, text = msg_invalid_command_for_tracker)
         return
 
-    users[chat_id].genre = genre
-    users[chat_id].state = states['iterating']
+    user.genre = genre
+    user.state = states['iterating']
 
-    if users[chat_id].indexes[users[chat_id].tracker].get(genre) is None:
-        users[chat_id].indexes[users[chat_id].tracker][genre] = 0
-        users[chat_id].pages[users[chat_id].tracker][genre] = 1
+    if user.indexes[user.tracker].get(genre) is None:
+        user.indexes[user.tracker][genre] = 0
+        user.pages[user.tracker][genre] = 1
         update_movies(chat_id)
     else:
         increase_index(chat_id)
 
     send_movie_info(bot, chat_id)
 
+    session.flush()
+
 def handle_decision(bot, chat_id, answer):
+    user = get_user(chat_id)
+    session = get_session()
+
     if answer == 'yes':
         bot.sendMessage(chat_id = chat_id, text = "Ok, let's try to do it again")
     else:
         bot.sendMessage(chat_id = chat_id, text = "As you wish")
-        users[chat_id].state = states['undefined']
+        user.state = states['undefined']
+
+    session.flush()
 
 def handle_callback(bot, update):
     try:

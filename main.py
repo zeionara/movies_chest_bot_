@@ -92,6 +92,7 @@ sys.path.append("adapters/")
 sys.path.append("handlers/")
 sys.path.append("managers/")
 sys.path.append("tools/")
+sys.path.append("odm/")
 
 #caching
 import expire_controller

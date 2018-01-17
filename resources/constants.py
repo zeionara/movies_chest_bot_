@@ -72,5 +72,9 @@ scp_port = int(os.environ['scp_port'])
 scp_username = os.environ['scp_username']
 scp_password = os.environ['scp_password']
 
+db_login = os.environ['movies_chest_bot_db_login']
+db_password = os.environ['movies_chest_bot_db_password']
+db_path = os.environ['movies_chest_bot_db_path']
+
 scp_schedule_folder = '/home/s207602/public_html/movies_chest_bot_schedules'
 scp_schedule_path = 'https://se.ifmo.ru/~s207602/movies_chest_bot_schedules'
