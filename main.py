@@ -77,6 +77,9 @@
 import sys
 from threading import Thread
 
+import logging
+
+
 #
 #additional libs
 #
@@ -97,14 +100,14 @@ sys.path.append("odm/")
 #caching
 import expire_controller
 #constants
-from constants import telegram_token
+from constants import telegram_token, logging_pattern, logging_filename
 #handlers
 from command_handlers import select_genre, select_tracker, start_search, subscribe, unsubscribe
 from callback_handlers import handle_callback
 from error_handlers import print_error
 from message_handlers import handle_movie_request, handle_subscription_request
 
-
+logging.basicConfig(format = logging_pattern, level = logging.DEBUG, filename = logging_filename)
 
 def main():
     #save_all_movie_schedules()

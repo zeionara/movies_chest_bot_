@@ -39,16 +39,14 @@ def update_redis_time(key):
     redis_connection.set(time_prefix + redis_key_delimiter + str_key, pickle.dumps(datetime.datetime.now()))
 
 def get_from_redis(key):
-    #print('waiting for redis... ',key)
     packed_object = redis_connection.get(key)
-    #print('waiting for redis finished')
     if packed_object is not None:
-        #print('>>>>>>')
         update_redis_time(key)
-        #print('>>>>>>')
-        #print(packed_object)
         res = pickle.loads(packed_object)
-        #print('>>>>>>')
         return res
-    #print(packed_object)
     return None
+
+def is_there_valid_schedule(id):
+    if get_from_redis('schedule' + redis_key_delimiter + str(id)) is None:
+        return False
+    return True

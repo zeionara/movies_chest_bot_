@@ -77,7 +77,7 @@ class User(MappedClass):
     #self.wiki_content = None
     wiki_content = FieldProperty(schema.Anything(if_missing = None))
     #self.wiki_keyboard_markup = None
-    wiki_keyboard_markup = FieldProperty(schema.Array(schema.Anything, if_missing = None))
+    wiki_keyboard_markup = FieldProperty(schema.Anything(if_missing = None))
     #self.trackers_to_subscribe = None
     trackers_to_subscribe = FieldProperty(schema.Array(schema.String, if_missing = None))
 
@@ -91,15 +91,3 @@ def create_user(chat_id, tracker, state):
 
 def get_user(chat_id):
     return User.query.get(chat_id = chat_id)
-#def create_user(state, tracker):
-#    return User(state = state, indexes = {tracker : {}}, pages = {tracker : {}}, review_indexes = {}, page = 1, tracker = tracker, searching_movies = True, )
-
-#salary = Salary(worker_id = "197", common = 3000.1, vacation = 2000.1, sick = 1000.1)
-#user = User(chat_id = 1488, tracker = 'pbay', state = 0)
-#session.flush()
-#session.clear()
-#print(User.query.get(chat_id = 1488))
-
-
-#create_user(chat_id = 1488, tracker = 'pbay', state = 0)
-#print(get_user(420))

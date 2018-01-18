@@ -9,6 +9,12 @@ from string_converting import chunkstring
 
 import wikipedia_adapter
 
+from message_manager import send_plain, send_chunked
+
+#
+#get article from wiki and send it's synopsis with a list of section's buttons
+#
+
 def send_wiki_info(bot, chat_id, title):
     user = get_user(chat_id)
     session = get_session()
@@ -23,20 +29,22 @@ def send_wiki_info(bot, chat_id, title):
 
     user.wiki_keyboard_markup = keyboard_markup
 
-    response = bot.sendMessage(chat_id = chat_id, text = synopsis, reply_markup = keyboard_markup)
+    send_plain(bot = bot, chat_id = chat_id, message = synopsis, reply_markup = keyboard_markup)
+
     session.flush()
-    return response
+    return
+
+#
+#send info associated with an article's section
+#
 
 def send_wiki_section_info(bot, chat_id, section):
     user = get_user(chat_id)
-    session = get_session()
 
-    chunks = chunkstring(user.wiki_content.get(section))
-    for chunk in chunks[:-1]:
-        bot.sendMessage(chat_id, chunk)
+    content = user.wiki_content.get(section)
+    if content == '':
+        content = 'n/a'
 
-    if chunks[-1] == '':
-        chunks[-1] = 'n/a'
-    response = bot.sendMessage(chat_id = chat_id, text = chunks[-1], reply_markup = user.wiki_keyboard_markup)
-    session.flush()
-    return response
+    send_chunked(bot = bot, chat_id = chat_id, message = content, image = None, reply_markup = user.wiki_keyboard_markup)
+
+    return

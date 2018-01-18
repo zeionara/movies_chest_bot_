@@ -1,6 +1,8 @@
 import requests
 import re
 
+import logging
+
 import sys
 
 sys.path.append("../tools/")
@@ -32,13 +34,15 @@ def parse_reviews(page):
         reviews.append(remove_tags(review))
     return reviews
 
-def get_reviews(id):
+def get_reviews(id_):
     global url
 
-    response = requests.get(url + '/title/{}/reviews'.format(id))
+    logging.info('Url reviews: {}'.format(url + '/title/{}/reviews'.format(id_)))
+    response = requests.get(url + '/title/{}/reviews'.format(id_))
     content = str(response.content)
 
     reviews = parse_reviews(content)
+    logging.info('Got reviews: {}'.format(reviews))
     return reviews
 
 #print(get_reviews('tt5208216'))

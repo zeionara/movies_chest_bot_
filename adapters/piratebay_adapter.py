@@ -43,7 +43,7 @@ class PiratebayAdapter:
         return delete_slashes(title.lstrip())
 
     def get_href(self, movie_raw):
-        return get_middle(movie_raw, 'href="', '"')
+        return self.url + get_middle(movie_raw, 'href="', '"')
 
     def rreduce(self, title):
         return (''.join(e for e in title if e.isalnum())).lower()

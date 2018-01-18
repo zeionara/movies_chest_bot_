@@ -14,6 +14,7 @@ num_of_days_in_schedule = 5
 
 delay_between_request_sequence = 5
 delay_between_notifying_users = 1
+delay_between_message_sequence = 1
 
 any_keyword = 'any'
 first_page = 1
@@ -60,6 +61,9 @@ msg_choose_genre_to_unsubscripe = 'Please, send me a list of genres which you do
             tracker_names_delimiter + '". If you do not want to get notifications for any genre, just write "any". Available partial options for you are: '
 msg_no_subscriptions = "You are not subscribed to any tracker"
 msg_entered_wrong = "Oops, it seems that you entered something wrong. Do you want to try again?"
+msg_no_more_movies = 'There are no more movies'
+msg_fetching_schedule = 'Fetching schedule from website...'
+msg_counted_schedule_for = 'Schedule fetched for '
 
 omdb_api_key = os.environ['zeionara_omdb_api_key']
 redis_host = os.environ['barbershop_redis_host']
@@ -78,3 +82,6 @@ db_path = os.environ['movies_chest_bot_db_path']
 
 scp_schedule_folder = '/home/s207602/public_html/movies_chest_bot_schedules'
 scp_schedule_path = 'https://se.ifmo.ru/~s207602/movies_chest_bot_schedules'
+
+logging_pattern = "%(filename)-20s:%(lineno)-4d %(levelname)-10s %(asctime)s %(message)s\n\n"
+logging_filename = 'log.log'

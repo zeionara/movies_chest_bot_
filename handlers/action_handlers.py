@@ -1,4 +1,6 @@
 #from shared import users
+import logging
+
 from user import get_user
 from db_connection_manager import get_session
 
@@ -11,7 +13,7 @@ from reviews_manager import get_movie_id
 from reviews_manager import get_movie_review_list_index
 from reviews_manager import update_reviews, send_review_info
 
-from movies_manager import increase_index, send_movie_info
+from movies_manager import increase_index, send_movie_info, update_movies
 
 from reviews_manager import increase_reviews_index
 
@@ -31,9 +33,12 @@ def handle_next_action(chat_id, provider, index, searching_movies):
 
     session.flush()
 
-def hanle_flush_action(chat_id, provider, index, searching_movies):
+def handle_flush_action(chat_id, provider, index, searching_movies):
     user = get_user(chat_id)
     session = get_session()
+
+    tracker = user.tracker
+    genre = user.genre
 
     if searching_movies and user.pages[tracker][genre] == 1:
         user.indexes[tracker][genre] = 0
@@ -49,18 +54,21 @@ def hanle_flush_action(chat_id, provider, index, searching_movies):
     session.flush()
 
 def handle_imdbrev_action(chat_id):
+    logging.info('IMDB Rev upd')
     user = get_user(chat_id)
     session = get_session()
 
+    logging.info('IMDB Rev upd')
     if user.imdb_id is not None:
         provider = 'imdb'
         user.reviews_provider = provider
-
+        logging.info('IMDB Rev upd')
         id = user.imdb_id
         index = get_movie_review_list_index(provider, id)
         user.searching_movies = False
-
+        logging.info('IMDB Rev upd')
         update_reviews(chat_id)
+        logging.info('IMDB Rev upd after')
 
         if user.review_indexes.get(index) is None:
             user.review_indexes[index] = 0
@@ -144,7 +152,7 @@ def handle_action(chat_id, action, bot):
 
     provider = user.reviews_provider
 
-    id = get_movie_id(chat_id)
+    id = get_movie_id(user, provider)
     index = get_movie_review_list_index(provider, id)
 
     if action == 'flush':
