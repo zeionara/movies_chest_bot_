@@ -50,10 +50,11 @@ def extend_subscription(redis_key, chat_id):
 
 def cut_subscription(subscription, chat_id):
     if chat_id in subscription.users_ids:
+        if len(subscription.users_ids) == 1:
+            remove_subscription(subscription.page_key)
+            return
         subscription.users_ids.remove(chat_id)
 
-    if len(subscription.users_ids) == 0:
-        remove_subscription(redis_key)
 
 def reduce_subscriptions(chat_id):
     excess_keys = []
@@ -69,11 +70,15 @@ def reduce_subscriptions(chat_id):
     session.flush()
 
 def reduce_subscription(redis_key, chat_id):
+    print('before reducing {} subscription for {} : {}'.format(redis_key, chat_id, get_all_subscriptions()))
+
     subscription = get_subscription(redis_key)
     if subscription is not None:
 
         cut_subscription(subscription = subscription, chat_id = chat_id)
 
     session.flush()
+
+    print('after reducing {} subscription for {} : {}'.format(redis_key, chat_id, get_all_subscriptions()))
 
 #print(get_all_subscriptions())

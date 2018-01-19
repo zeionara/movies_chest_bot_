@@ -3,6 +3,7 @@ import traceback
 
 from keyboard_markups import genre_reply_markup
 from keyboard_markups import tracker_reply_markup
+from keyboard_markups import main_reply_markup, main_reply_markup_remove
 
 from constants import msg_tracker_is_not_set
 from constants import msg_invalid_command_for_tracker
@@ -12,6 +13,7 @@ from constants import msg_send_me_title_for_search
 from constants import msg_coming_soon
 from constants import tracker_names
 from constants import msg_choose_tracker_to_subscripe, tracker_names_delimiter, msg_no_subscriptions, msg_choose_tracker_to_unsubscripe
+from shared import main_keyboard_active
 
 from shared import users
 #from user import User
@@ -59,6 +61,17 @@ def select_tracker(bot, update):
     response = bot.sendMessage(chat_id = update.message.chat_id, text = msg_choose_tracker, reply_markup = tracker_reply_markup)
 
     session.flush()
+    return response
+
+def switch_keyboard(bot, update):
+    if not main_keyboard_active:
+        response = bot.sendMessage(chat_id = update.message.chat_id, reply_to_message_id = update.message.message_id,
+                                    text = 'Ok, keyboard is here', reply_markup = main_reply_markup)
+        main_keyboard_active = True
+    else:
+        response = bot.sendMessage(chat_id = update.message.chat_id, reply_to_message_id = update.message.message_id,
+                                    text = 'Ok, keyboard is removed', reply_markup = main_reply_markup_remove)
+        main_keyboard_active = False
     return response
 
 def subscribe(bot, update):

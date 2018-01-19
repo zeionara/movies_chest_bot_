@@ -5,6 +5,8 @@ ya = YuptorrentsAdapter()
 pa = PiratebayAdapter()
 users = {}
 
+main_keyboard_active = True
+
 whole_schedule = None
 written_schedules = []
 

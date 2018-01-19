@@ -22,7 +22,7 @@ def delete_all():
     for key in redis_connection.scan_iter():
         redis_connection.delete(key)
 
-delete_all()
+#delete_all()
 #show_all()
 #MovieHeader = namedtuple('MovieHeader','title href')
 #redis_connection.set('mine_any_1', pickle.dumps([MovieHeader('The party (2017)', 'https://proxyspotting.in/torrent/19202259/The.Party.2017.BDRip.XviD.AC3-EVO'),

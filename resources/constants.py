@@ -23,9 +23,9 @@ actual_movies_page_size = 20
 
 seconds_in_day = 86400
 
-max_lifetime = 3600
+max_lifetime = 60
 max_memory = 50240
-checking_interval = 3600
+checking_interval = 60
 
 interesting_cinemas = ['мираж','дом кино','пик','великан парк','каро']
 cinemas_indexes = {}

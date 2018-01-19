@@ -102,7 +102,7 @@ import expire_controller
 #constants
 from constants import telegram_token, logging_pattern, logging_filename
 #handlers
-from command_handlers import select_genre, select_tracker, start_search, subscribe, unsubscribe
+from command_handlers import select_genre, select_tracker, start_search, subscribe, unsubscribe, switch_keyboard
 from callback_handlers import handle_callback
 from error_handlers import print_error
 from message_handlers import handle_movie_request, handle_subscription_request
@@ -122,6 +122,7 @@ def main():
     updater.dispatcher.addHandler(CommandHandler('search', start_search))
     updater.dispatcher.addHandler(CommandHandler('subscribe', subscribe))
     updater.dispatcher.addHandler(CommandHandler('unsubscribe', unsubscribe))
+    updater.dispatcher.addHandler(CommandHandler('keyboard', switch_keyboard))
     updater.dispatcher.addHandler(CallbackQueryHandler(handle_callback))
     updater.dispatcher.addErrorHandler(print_error)
     updater.dispatcher.addHandler(MessageHandler(filters.TEXT, handle_movie_request))

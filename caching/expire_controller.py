@@ -22,7 +22,7 @@ from constants import max_lifetime, max_memory, checking_interval
 from redis_connector import redis_connection, get_from_redis, write_to_redis
 
 #from shared import subscribed_to
-from subscriptions import get_subscription
+from subscriptions import get_subscription, get_all_subscriptions
 
 from movies_manager import load_page
 
@@ -39,6 +39,11 @@ def get_key(key):
 
 def get_movies_for_notification(new_page, old_page):
     result = []
+
+    if old_page is None:
+        print('Old page with movies is None')
+        return result
+
     was_occured_earlier = False
     for new_movie in new_page:
         was_occured_earlier = False
@@ -55,7 +60,7 @@ def inspect(arg):
     try:
         bot = arg
 
-        current_time = datetime.datetime.now()
+
         pip = redis_connection.pipeline()
         keys = []
 
@@ -65,10 +70,16 @@ def inspect(arg):
 
         key_times = pip.execute()
         print('New checking cycle')
+
+        print(get_all_subscriptions())
         for i in range(len(keys)):
 
             key_time = pickle.loads(key_times[i])
             key = get_key(str(keys[i])[2:-1])
+
+            print(get_from_redis(key))
+
+            current_time = datetime.datetime.now()
 
             print('Key {} exists for {}'.format(str(str.encode(key), 'utf-8'), (current_time - key_time).total_seconds()))
 
@@ -90,12 +101,12 @@ def inspect(arg):
                     new_page = load_page(tracker, genre, page)
                     old_page = get_from_redis(key)
 
-                    #print('Old page')
-                    #print('New page')
+                    print('Old page : {}'.format(old_page))
+                    print('New page : {}'.format(new_page))
 
                     movies_for_notification = get_movies_for_notification(new_page, old_page)
-                    #print(users_for_notification)
-                    #print(movies_for_notification)
+                    print(users_for_notification)
+                    print(movies_for_notification)
                     logging.info('Movies for notification: {}'.format(movies_for_notification))
                     notify_all(bot, users_for_notification, movies_for_notification)
 

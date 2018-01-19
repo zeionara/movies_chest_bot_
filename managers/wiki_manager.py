@@ -3,7 +3,7 @@ from user import get_user, create_user
 from db_connection_manager import get_session
 
 from keyboard_markups import back_btn
-from keyboard_markups import get_wiki_keyboard_markup
+from keyboard_markups import get_wiki_keyboard_markup, get_wiki_buttons_array, wiki_buttons_array_to_keyboard_markup
 
 from string_converting import chunkstring
 
@@ -25,11 +25,12 @@ def send_wiki_info(bot, chat_id, title):
     sections = info['sections']
     synopsis = info['synopsis']
 
-    keyboard_markup = get_wiki_keyboard_markup(sections)
+    keyboard_markup = get_wiki_buttons_array(sections) #get_wiki_keyboard_markup(sections)
 
     user.wiki_keyboard_markup = keyboard_markup
 
-    send_plain(bot = bot, chat_id = chat_id, message = synopsis, reply_markup = keyboard_markup)
+    send_plain(bot = bot, chat_id = chat_id, message = synopsis,
+                reply_markup = wiki_buttons_array_to_keyboard_markup(keyboard_markup))
 
     session.flush()
     return
@@ -45,6 +46,7 @@ def send_wiki_section_info(bot, chat_id, section):
     if content == '':
         content = 'n/a'
 
-    send_chunked(bot = bot, chat_id = chat_id, message = content, image = None, reply_markup = user.wiki_keyboard_markup)
+    send_chunked(bot = bot, chat_id = chat_id, message = content, image = None,
+                reply_markup = wiki_buttons_array_to_keyboard_markup(user.wiki_keyboard_markup))
 
     return
