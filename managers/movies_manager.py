@@ -1,28 +1,49 @@
-
-#standard
+#
+#python
+#
 
 import requests
-
 from collections import namedtuple
-
 import telegram
 
-#local
+#
+#odm
+#
+
+from user import get_user, create_user
+
+#
+#resources
+#
+
+from constants import top_movies_xml_path, states, delimiter, omdb_api_key, msg_no_more_movies
+from keyboard_markups import action_reply_markup, action_reply_markup_extended, action_reply_markup_reduced, action_reply_markup_extremely_reduced
+from shared import ya, pa
+
+#
+#managers
+#
 
 from message_manager import send_chunked, send_plain, send_chunked_forked
 from db_connection_manager import get_session
 
-from user import get_user, create_user
+#
+#caching
+#
 
 from redis_connector import get_from_redis, write_to_redis
+
+#
+#tools
+#
 
 from html_parcing import remove_tags
 from string_converting import stringify_advanced_movie_info, chunkstring
 from collection_converting import list_to_movie_header
 
-from constants import top_movies_xml_path, states, delimiter, omdb_api_key, msg_no_more_movies
-from keyboard_markups import action_reply_markup, action_reply_markup_extended, action_reply_markup_reduced, action_reply_markup_extremely_reduced
-from shared import ya, pa
+#
+#adapters
+#
 
 import youtube_adapter
 import kudago_adapter
@@ -38,10 +59,7 @@ MovieExtendedHeader = namedtuple('MovieExtendedHeader','title href id')
 #get movie info via basic information from user's object
 #
 
-def get_standart_movie_info(chat_id):
-    user = get_user(chat_id)
-    session = get_session()
-
+def get_standart_movie_info(user, session):
     tracker = user.tracker
     genre = user.genre
 
@@ -90,18 +108,15 @@ def get_advanced_movie_info_by_title(title):
 #send minimal movie info
 #
 
-def send_standart_movie_info(bot, chat_id, redis_key, href):
-    user = get_user(chat_id)
-    session = get_session()
-
+def send_standart_movie_info(bot, user, session, redis_key, href):
     user.imdb_id = None
     user.current_title = redis_key
 
-    movie = get_standart_movie_info(chat_id)
+    movie = get_standart_movie_info(user, session)
 
     content = movie.title + '\n\n\n' + movie.trailer + '\n\n\n' + movie.description + '\n\n\nHref: ' + href
 
-    send_chunked(bot = bot, chat_id = chat_id, message = content, image = movie.poster, reply_markup = action_reply_markup)
+    send_chunked(bot = bot, chat_id = user.chat_id, message = content, image = movie.poster, reply_markup = action_reply_markup)
 
     movie_info = {}
     movie_info['Poster'] = movie.poster
@@ -118,10 +133,7 @@ def send_standart_movie_info(bot, chat_id, redis_key, href):
 #send movie info got from omdb
 #
 
-def send_advanced_movie_info(bot, chat_id, advanced_info, redis_key, href):
-    user = get_user(chat_id)
-    session = get_session()
-
+def send_advanced_movie_info(bot, user, session, advanced_info, redis_key, href):
     user.imdb_id = advanced_info.get('imdbID')
     user.current_title = redis_key
 
@@ -130,7 +142,7 @@ def send_advanced_movie_info(bot, chat_id, advanced_info, redis_key, href):
     poster = advanced_info['Poster']
     content = advanced_info['Title'] + '\n\n\nTrailer: ' + trailer + '\n\n\n' + stringify_advanced_movie_info(advanced_info) + '\n\n\nHref: ' + href
 
-    send_chunked(bot = bot, chat_id = chat_id, message = content, image = poster, reply_markup = action_reply_markup_extended)
+    send_chunked(bot = bot, chat_id = user.chat_id, message = content, image = poster, reply_markup = action_reply_markup_extended)
 
     advanced_info['Trailer'] = trailer
     advanced_info['Href'] = href
@@ -142,10 +154,7 @@ def send_advanced_movie_info(bot, chat_id, advanced_info, redis_key, href):
 #send movie info without additional buttons, which consider movies list, such as next and flush
 #
 
-def send_advanced_single_movie_info(bot, chat_id, advanced_info):
-    user = get_user(chat_id)
-    session = get_session()
-
+def send_advanced_single_movie_info(bot, user, session, advanced_info):
     if 'Year' in advanced_info:
         redis_key = advanced_info['Title'] + ' (' + advanced_info['Year'] + ')'
     else:
@@ -158,7 +167,7 @@ def send_advanced_single_movie_info(bot, chat_id, advanced_info):
     poster = advanced_info.get('Poster')
     content = advanced_info['Title'] + '\n\n\nTrailer: ' + trailer + '\n\n\n' + stringify_advanced_movie_info(advanced_info)
 
-    send_chunked_forked(bot = bot, chat_id = chat_id, message = content,\
+    send_chunked_forked(bot = bot, chat_id = user.chat_id, message = content,\
         reply_markups = [action_reply_markup_reduced, action_reply_markup_extremely_reduced],\
         conditions = [advanced_info.get('imdbID') is not None], image = poster)
 
@@ -172,10 +181,8 @@ def send_advanced_single_movie_info(bot, chat_id, advanced_info):
 #general method for sending movie info to user just by their chat_id
 #
 
-def send_movie_info(bot, chat_id):
-    user = get_user(chat_id)
-    session = get_session()
-
+def send_movie_info(bot, user, session):
+    chat_id = user.chat_id
     tracker = user.tracker
     genre = user.genre
 
@@ -219,18 +226,15 @@ def send_movie_info(bot, chat_id):
     #and finally, send message
 
     if advanced_info['Response'] == 'False':
-        send_standart_movie_info(bot, chat_id, movie.title, movie.href)
+        send_standart_movie_info(bot, user, session, movie.title, movie.href)
     else:
-        send_advanced_movie_info(bot, chat_id, advanced_info, movie.title, movie.href)
+        send_advanced_movie_info(bot, user, session, advanced_info, movie.title, movie.href)
 
 #
 #prepare and send first message with movie info just after user have selected a tracker
 #
 
-def send_first_movie_msg(bot, chat_id, tracker):
-    user = get_user(chat_id)
-    session = get_session()
-
+def send_first_movie_msg(bot, user, session, tracker):
     if tracker == 'pbay' or tracker == 'mine' or tracker == 'act':
         genre = 'any'
 
@@ -241,13 +245,13 @@ def send_first_movie_msg(bot, chat_id, tracker):
             user.indexes[user.tracker][genre] = 0
             user.pages[user.tracker][genre] = 1
         else:
-            increase_index(chat_id)
+            increase_index(user, session)
 
-        update_movies(chat_id)
+        update_movies(user, session)
 
         session.flush()
 
-        send_movie_info(bot, chat_id)
+        send_movie_info(bot, user, session)
 #
 #load movies list from an external source
 #
@@ -286,10 +290,7 @@ def cache_page(tracker, genre, page):
 #load movies list from an external source, cache it in redis and assign it to a user
 #
 
-def update_movies(chat_id):
-    user = get_user(chat_id)
-    session = get_session()
-
+def update_movies(user, session):
     tracker = user.tracker
     genre = user.genre
     page = user.pages[tracker][genre]
@@ -302,10 +303,7 @@ def update_movies(chat_id):
 #move to next movie in user's list
 #
 
-def increase_index(chat_id):
-    user = get_user(chat_id)
-    session = get_session()
-
+def increase_index(user, session):
     tracker = user.tracker
     genre = user.genre
 
@@ -316,4 +314,4 @@ def increase_index(chat_id):
         user.indexes[tracker][genre] = 0
         user.pages[tracker][genre] += 1
         session.flush()
-        update_movies(chat_id)
+        update_movies(user, session)

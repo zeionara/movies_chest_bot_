@@ -1,10 +1,27 @@
+#
+#python
+#
+
 import time
+
+#
+#odm
+#
+
+from subscriptions import create_subscription, get_subscription, get_all_subscriptions, remove_subscription, extend_subscription, reduce_subscription,\
+    reduce_subscriptions
+from user import get_user
+
+#
+#resources
+#
 
 from constants import genred_trackers, delimiter, any_keyword, first_page, trackers, genres_lower, \
                         tracker_names, delay_between_request_sequence, delay_between_notifying_users
 
-from subscriptions import create_subscription, get_subscription, get_all_subscriptions, remove_subscription, extend_subscription, reduce_subscription,\
-    reduce_subscriptions
+#
+#managers
+#
 
 from movies_manager import cache_page, get_advanced_movie_info_by_title, send_advanced_single_movie_info
 
@@ -58,12 +75,13 @@ def unregister_subscription(chat_id, selected_trackers, selected_genres):
 #send information about all movies from the list to all users
 #
 
-def notify_all(bot, users, movies):
+def notify_all(bot, users, movies, session):
     for chat_id in users:
+        user = get_user(chat_id)
         for movie in movies:
             movie_info = get_advanced_movie_info_by_title(movie.title)
             movie_info['Href'] = movie.href
-            send_advanced_single_movie_info(bot, chat_id, movie_info)
+            send_advanced_single_movie_info(bot, user, session, movie_info)
             time.sleep(delay_between_notifying_users)
 
 #

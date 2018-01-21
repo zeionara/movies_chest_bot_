@@ -1,8 +1,15 @@
+#
+#python
+#
+
 import sys
 sys.path.append('../resources/')
-
 from ming import create_datastore
 from ming.odm import ThreadLocalODMSession
+
+#
+#resources
+#
 
 from constants import db_login, db_password, db_path
 

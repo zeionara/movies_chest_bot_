@@ -1,33 +1,60 @@
+#
+#python
+#
+
 import sys
 import traceback
 
-#from shared import users
+#
+#odm
+#
 
 from user import get_user, create_user
-from db_connection_manager import get_session
 
-from shared import pa
-from shared import ya
+#
+#resources
+#
 
+from shared import pa, ya
 from constants import states
-
+from constants import msg_tracker_is_not_set, msg_invalid_command_for_tracker, msg_lets_try_again, msg_declined_repeating_entering, msg_tracker_switched
+from constants import user_selected_genre, user_selected_tracker, user_initialized_action, user_selected_wiki_article_section, user_answered_yes_or_no
+from constants import piratebay_tracker, yuptorrents_tracker, gold_collection_tracker, actual_movies_tracker, genred_trackers
 from keyboard_markups import action_reply_markup
 
-from wiki_manager import send_wiki_section_info
+#
+#managers
+#
 
+from db_connection_manager import get_session
+from wiki_manager import send_wiki_section_info
 from movies_manager import send_first_movie_msg, update_movies, increase_index, send_movie_info
+from message_manager import send_plain
+
+#
+#tools
+#
 
 from string_converting import split
 
-#from user import User
-
-from constants import states
+#
+#handlers
+#
 
 from action_handlers import handle_action
 
-def set_tracker(chat_id, tracker):
-    user = get_user(chat_id)
-    session = get_session()
+#
+#decorators
+#
+
+from exception_handling_decorators import print_exceptions
+
+#
+#switches user to selected tracker
+#
+
+def set_tracker(user, session, tracker, bot):
+    chat_id = user.chat_id
 
     if user is None:
         user = create_user(chat_id, tracker, states['selecting_genre'])
@@ -37,17 +64,25 @@ def set_tracker(chat_id, tracker):
             user.indexes[tracker] = {}
             user.pages[tracker] = {}
 
+    if tracker in genred_trackers:
+        send_plain(bot = bot, chat_id = chat_id, message = msg_tracker_switched)
+    else:
+        send_first_movie_msg(bot, user, session, tracker)
+
     session.flush()
 
-def set_genre(chat_id, genre, bot):
-    user = get_user(chat_id)
-    session = get_session()
+#
+#switches user to the selected genre
+#
+
+def set_genre(user, session, genre, bot):
+    chat_id = user.chat_id
 
     if user is None:
-        bot.sendMessage(chat_id = chat_id, text = msg_tracker_is_not_set)
+        send_plain(bot = bot, chat_id = chat_id, message = msg_tracker_is_not_set)
         return
-    elif user.tracker == 'pbay':
-        bot.sendMessage(chat_id = chat_id, text = msg_invalid_command_for_tracker)
+    elif user.tracker not in genred_trackers:
+        send_plain(bot = bot, chat_id = chat_id, message = msg_invalid_command_for_tracker)
         return
 
     user.genre = genre
@@ -56,53 +91,57 @@ def set_genre(chat_id, genre, bot):
     if user.indexes[user.tracker].get(genre) is None:
         user.indexes[user.tracker][genre] = 0
         user.pages[user.tracker][genre] = 1
-        update_movies(chat_id)
+        update_movies(user, session)
     else:
-        increase_index(chat_id)
+        increase_index(user, session)
 
-    send_movie_info(bot, chat_id)
+    send_movie_info(bot, user, session)
 
     session.flush()
 
-def handle_decision(bot, chat_id, answer):
-    user = get_user(chat_id)
-    session = get_session()
+#
+#sets state to undefined if user answers 'no'
+#
+
+def handle_decision(user, session, callback_value, bot):
+    chat_id = user.chat_id
 
     if answer == 'yes':
-        bot.sendMessage(chat_id = chat_id, text = "Ok, let's try to do it again")
+        send_plain(bot = bot, chat_id = chat_id, message = msg_lets_try_again)
     else:
-        bot.sendMessage(chat_id = chat_id, text = "As you wish")
+        send_plain(bot = bot, chat_id = chat_id, message = msg_declined_repeating_entering)
         user.state = states['undefined']
+        session.flush()
 
-    session.flush()
-
+#
+#general method for handling callbacks, given by user
+#
+@print_exceptions
 def handle_callback(bot, update):
-    try:
-        callback_data = split(update.callback_query.data, maxsplit = 1)
-        callback_type = callback_data[0]
-        callback_value = callback_data[1]
+    #try:
+    callback_data = split(update.callback_query.data, maxsplit = 1)
+    callback_type = callback_data[0]
+    callback_value = callback_data[1]
 
-        chat_id = update.callback_query.message.chat.id
+    user = get_user(update.callback_query.message.chat.id)
+    session = get_session()
 
-        if callback_type == 'genre':
-            set_genre(chat_id, callback_value, bot)
+    if callback_type == user_selected_genre:
+        set_genre(user, session, callback_value, bot)
 
-        elif callback_type == 'tracker':
-            set_tracker(chat_id, callback_value)
-            bot.sendMessage(chat_id = chat_id, text = 'Ok, tracker has been switched')
+    elif callback_type == user_selected_tracker:
+        set_tracker(user, session, callback_value, bot)
 
-            if callback_value == 'pbay' or callback_value == 'mine' or callback_value == 'act':
-                send_first_movie_msg(bot, chat_id, callback_value)
+    elif callback_type == user_initialized_action:
+        handle_action(user, session, callback_value, bot)
 
-        elif callback_type == 'action':
-            handle_action(chat_id, callback_value, bot)
+    elif callback_type == user_selected_wiki_article_section:
+        send_wiki_section_info(user, session, callback_value, bot)
 
-        elif callback_type == 'wikisection':
-            send_wiki_section_info(bot, chat_id, callback_value)
+    elif callback_type == user_answered_yes_or_no:
+        handle_decision(user, session, callback_value, bot)
 
-        elif callback_type == 'decision':
-            handle_decision(bot, chat_id, callback_value)
-
-    except Exception:
-        print(sys.exc_info()[1])
-        print(traceback.print_tb(sys.exc_info()[2]))
+    #except Exception:
+    #    print(sys.exc_info())
+    #    print(sys.exc_info()[1])
+    #    print(traceback.print_tb(sys.exc_info()[2]))

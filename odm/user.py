@@ -1,17 +1,24 @@
+#
+#python
+#
+
 import sys
 sys.path.append('../managers/')
-
-from db_connection_manager import get_session
 
 from ming import schema
 from ming.odm import FieldProperty
 from ming.odm.declarative import MappedClass
 from ming.odm.mapper import MapperExtension
 
+#
+#managers
+#
+
+from db_connection_manager import get_session
+
 collection_name = 'users'
 
 session = get_session()
-
 
 class UserExtension(MapperExtension):
     def before_insert(self, obj, st, sess):
@@ -80,6 +87,8 @@ class User(MappedClass):
     wiki_keyboard_markup = FieldProperty(schema.Anything(if_missing = None))
     #self.trackers_to_subscribe = None
     trackers_to_subscribe = FieldProperty(schema.Array(schema.String, if_missing = None))
+
+    main_keyboard_active = FieldProperty(schema.Bool(if_missing = False))
 
     #self.tmp = None
     tmp = FieldProperty(schema.Anything)

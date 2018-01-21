@@ -1,21 +1,46 @@
-#from shared import users
+#
+#python
+#
+
 import logging
 
+#
+#odm
+#
+
 from user import get_user, create_user
-from db_connection_manager import get_session
+
+#
+#resources
+#
 
 from shared import ya, pa
-
-from redis_connector import get_from_redis, write_to_redis
-
 from constants import delimiter, reviews_prefix
-
 from keyboard_markups import action_reply_markup_review_imdb, action_reply_markup_review_kp, action_reply_markup_review_kp_extended,\
     action_reply_markup_review_rtc, action_reply_markup_review_rtc_extended, action_reply_markup_review_rta, action_reply_markup_review_rta_extended
 
+#
+#managers
+#
+
+from db_connection_manager import get_session
+from message_manager import send_chunked_forked
+
+#
+#tools
+#
+
 from string_converting import chunkstring
 
-from message_manager import send_chunked_forked
+#
+#caching
+#
+
+from redis_connector import get_from_redis, write_to_redis
+
+#
+#adapters
+#
 
 import imdb_adapter
 import kinopoisk_adapter
@@ -43,10 +68,7 @@ def get_movie_review_list_index(provider, id):
 #update review list inside user's stored entry
 #
 
-def update_reviews(chat_id):
-    user = get_user(chat_id)
-    session = get_session()
-
+def update_reviews(user, session):
     provider = user.reviews_provider
     reviews_group = user.reviews_group
 
@@ -98,21 +120,15 @@ def update_reviews(chat_id):
 #move review pointer to the next entry (only for review lists with multiple pages)
 #
 
-def increase_reviews_index(chat_id):
-    user = get_user(chat_id)
-    session = get_session()
-
+def increase_reviews_index(user, session, provider, index):
     reviews_group = user.reviews_group
-    provider = user.reviews_provider
-
-    index = get_movie_review_list_index(provider, get_movie_id(user, provider))
 
     if user.review_indexes[index][reviews_group] < len(user.reviews) - 1:
         user.review_indexes[index][reviews_group] += 1
     else:
         user.review_indexes[index][reviews_group] = 0
         user.review_pages[index][reviews_group] += 1
-        update_reviews(chat_id)
+        update_reviews(user, session)
 
     session.flush()
 
@@ -135,10 +151,7 @@ def get_review(user, provider, index, reviews_group):
 #send review text to a user
 #
 
-def send_review_info(bot, chat_id):
-    user = get_user(chat_id)
-    session = get_session()
-
+def send_review_info(bot, user, session):
     provider = user.reviews_provider
     reviews_group = user.reviews_group
     imdb_id = user.imdb_id
@@ -155,6 +168,6 @@ def send_review_info(bot, chat_id):
         provider == 'rt' and reviews_group == 'critics' and imdb_id is None, provider == 'rt' and reviews_group == 'critics',
         provider == 'rt' and reviews_group == 'audience' and imdb_id is None, provider == 'rt' and reviews_group == 'audience']
 
-    send_chunked_forked(bot = bot, chat_id = chat_id, message = review, reply_markups = reply_markups, conditions = conditions)
+    send_chunked_forked(bot = bot, chat_id = user.chat_id, message = review, reply_markups = reply_markups, conditions = conditions)
 
     session.flush()

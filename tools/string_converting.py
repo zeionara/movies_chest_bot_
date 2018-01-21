@@ -12,7 +12,7 @@ def split(string, maxsplit = None):
         return string.split(delimiter, maxsplit = maxsplit)
 
 def chunkstring(string):
-    return [string[0+i:max_message_length+i] for i in range(0, len(string), max_message_length)]
+    return [string[0+i:max_message_length+i].lstrip().rstrip() for i in range(0, len(string), max_message_length)]
 
 def stringify_advanced_movie_info(info):
     result = ''

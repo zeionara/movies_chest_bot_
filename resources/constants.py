@@ -23,9 +23,9 @@ actual_movies_page_size = 20
 
 seconds_in_day = 86400
 
-max_lifetime = 60
+max_lifetime = 3600
 max_memory = 50240
-checking_interval = 60
+checking_interval = 3600
 
 interesting_cinemas = ['мираж','дом кино','пик','великан парк','каро']
 cinemas_indexes = {}
@@ -38,7 +38,7 @@ genres = ['Action','Crime','Thriller','Drama','Fantasy','Romance','Adventure','C
 genres_lower = ['action','crime','thriller','drama','fantasy','romance','adventure','comedy','documentary',
         'biography','horror','family','sci-fi','war','mystery','history','sport','music','western','animation','superhero']
 trackers = ['yup', 'pbay', 'mine', 'act']
-genred_trackers = ['yup','act']
+genred_trackers = ['yup']
 tracker_names = ['yuptorrents', 'piratebay', 'gold collection', 'actual movies']
 tracker_names_delimiter = ','
 
@@ -64,6 +64,38 @@ msg_entered_wrong = "Oops, it seems that you entered something wrong. Do you wan
 msg_no_more_movies = 'There are no more movies'
 msg_fetching_schedule = 'Fetching schedule from website...'
 msg_counted_schedule_for = 'Schedule fetched for '
+msg_lets_try_again = "Ok, let's try to do it again"
+msg_declined_repeating_entering = "As you wish"
+msg_tracker_switched = 'Ok, tracker has been switched'
+msg_keyboard_set = 'Ok, keyboard is here'
+msg_keyboard_removed = 'Ok, keyboard is removed'
+msg_subscription_set = 'Subsciption set successfully!'
+msg_imdb_id_is_not_set = 'Oops, it seems that I can\'t find page with reviews for this movie in imdb'
+msg_kp_id_is_not_set = 'Oops, it seems that I can\'t find page with reviews for this movie in kinopoisk'
+
+action_back_to_the_beginning = 'flush'
+action_show_next = 'next'
+action_show_reviews_from_imdb = 'imdbrev'
+action_show_reviews_from_kinopoisk = 'kprev'
+action_show_critics_reviews_from_rotten_tomatoes = 'rtcrev'
+action_show_audience_reviews_from_rotten_tomatoes = 'rtarev'
+action_return_from_reviews_to_movies = 'imdbrevexit'
+action_show_info_from_wiki = 'wiki'
+
+user_selected_genre = 'genre'
+user_selected_tracker = 'tracker'
+user_initialized_action = 'action'
+user_selected_wiki_article_section = 'wikisection'
+user_answered_yes_or_no = 'decision'
+
+piratebay_tracker = 'pbay'
+yuptorrents_tracker = 'yup'
+gold_collection_tracker = 'mine'
+actual_movies_tracker = 'act'
+
+rotten_tomatoes_reviews_provider = 'rt'
+imdb_reviews_provider = 'imdb'
+kinopoisk_reviews_provider = 'kp'
 
 omdb_api_key = os.environ['zeionara_omdb_api_key']
 redis_host = os.environ['barbershop_redis_host']
